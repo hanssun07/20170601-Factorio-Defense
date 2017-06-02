@@ -140,8 +140,8 @@ module Class_Vars
 	e.loc := l
 	result e
     end make_ev
-    
-    fcn make_node(x, y : int, weight : real) : path_vars
+
+    fcn make_node (x, y : int, weight : real) : path_vars
 	var p : path_vars
 	p.x := x
 	p.y := y
@@ -165,5 +165,42 @@ module Class_Vars
     var map_mov : array 0 .. 1 of array 1 .. MAP_WIDTH of array 1 .. MAP_HEIGHT of point
     var map_weights : array 1 .. MAP_WIDTH of array 1 .. MAP_HEIGHT of real
     var map_heap : array 1 .. MAP_WIDTH * MAP_HEIGHT of path_vars
-    var map_deaths : array 1..MAP_WIDTH of array 1..MAP_HEIGHT of real
+    var map_deaths : array 1 .. MAP_WIDTH of array 1 .. MAP_HEIGHT of real
+
+    fcn lock_sem (x, y : int, e : cheat
+	unchecked ^entity_vars) : boolean
+	if map_meta_sem (x) (y) > 0 then
+	    map_meta_sem (x) (y) -= 1
+	    for i : 1 .. MAP_M_CAP
+		if map_meta (x) (y) (i) = nil then
+		    map_meta (x) (y) (i) := e
+		    exit
+		end if
+	    end for
+	    if map_meta_sem (x) (y) <= 0 and (x = 1 or x = MAP_M_WID or y = MAP_M_HEI) then
+		chunks_avail_for_spawn -= 1
+		if chunks_avail_for_spawn <= 0 then
+		    can_spawn := false
+		end if
+	    end if
+	    result true
+	end if
+	result false
+    end lock_sem
+    proc unlock_sem (x, y : int, e : cheat
+	unchecked ^entity_vars)
+	map_meta_sem (x) (y) += 1
+	for i : 1 .. MAP_M_CAP
+	    if map_meta (x) (y) (i) = e then
+		map_meta (x) (y) (i) := nil
+		exit
+	    end if
+	end for
+	if map_meta_sem (x) (y) = 1 and (x = 1 or x = MAP_M_WID or y = MAP_M_HEI) then
+	    chunks_avail_for_spawn += 1
+	    if chunks_avail_for_spawn = 1 and num_enemies >= ENEMY_NUM then
+		can_spawn := false
+	    end if
+	end if
+    end unlock_sem
 end Class_Vars

@@ -167,9 +167,12 @@ proc resolve_enemies
     loop
 	exit when num_enemies <= 0
 	exit when enemies (last_enemy) -> v.state = ALIVE
-	last_enemy += 1
+	last_enemy := (last_enemy mod ENEMY_NUM) + 1
 	num_enemies -= 1
     end loop
+    if num_enemies < ENEMY_NUM then
+	can_spawn := true
+    end if
 end resolve_enemies
 
 %Only call this when there are no enemies on the map. Turret insertion is
@@ -360,78 +363,53 @@ proc draw_map ()
     end for
 end draw_map
 
-fcn lock_sem (x, y : int, e : cheat
-    unchecked ^entity_vars) : boolean
-    if map_meta_sem (x) (y) > 0 then
-	map_meta_sem (x) (y) -= 1
-	for i : 1 .. MAP_M_CAP
-	    if map_meta (x) (y) (i) = nil then
-		map_meta (x) (y) (i) := e
-	    end if
-	end for
-	if map_meta_sem (x) (y) <= 0 and (x = 1 or x = MAP_M_WID or y = MAP_M_HEI) then
-	    chunks_avail_for_spawn -= 1
-	    if chunks_avail_for_spawn <= 0 then
-		can_spawn := false
-	    end if
-	end if
-	result true
-    end if
-    result false
-end lock_sem
-proc unlock_sem (x, y : int, e : cheat
-    unchecked ^entity_vars)
-    map_meta_sem (x) (y) -= 1
-    for i : 1 .. MAP_M_CAP
-	if map_meta (x) (y) (i) = e then
-	    map_meta (x) (y) (i) := nil
-	end if
-    end for
-    if map_meta_sem (x) (y) = 1 and (x = 1 or x = MAP_M_WID or y = MAP_M_HEI) then
-	chunks_avail_for_spawn += 1
-	if chunks_avail_for_spawn = 1 and num_enemies >= ENEMY_NUM then
-	    can_spawn := false
-	end if
-    end if
-end unlock_sem
-
 proc spawn_enemy (t : int)
     if can_spawn then
 	var chunk_chosen := Rand.Int (1, chunks_avail_for_spawn)
 	for i : 1 .. MAP_M_WID
-	    for decreasing j : MAP_M_HEI .. 0
-		if j < 5 and (i not= 1 or i not= MAP_M_WID) then
-		    exit
-		end if
-		if map_meta_sem (i) (j) > 0 then
-		    chunk_chosen -= 1
-		    if chunk_chosen = 0 then
-			if lock_sem (i, j, addr (enemies (next_enemy) -> v)) then
-			    if j = MAP_M_HEI then
-				if i = MAP_M_WID then
+	    for decreasing j : MAP_M_HEI .. 1
+		if j = MAP_M_HEI or (i = 1 or i = MAP_M_WID) then
+		    if map_meta_sem (i) (j) > 0 then
+			chunk_chosen -= 1
+			if chunk_chosen = 0 then
+			    if lock_sem (i, j, addr (enemies (next_enemy) -> v)) then
+				if j = MAP_M_HEI then
+				    if i = MAP_M_WID then
+					if Rand.Real > 0.5 then
+					    enemies (next_enemy) -> initialize (next_enemy, t,
+						make_v (1 + Rand.Real * (MAP_M_SIZ - 1) + (i - 1) * MAP_M_SIZ, MAP_HEIGHT))
+					else
+					    enemies (next_enemy) -> initialize (next_enemy, t,
+						make_v (MAP_WIDTH, 1 + Rand.Real * (MAP_M_SIZ - 1) + (j - 1) * MAP_M_SIZ))
+					end if
+				    elsif i = 1 then
 				    if Rand.Real > 0.5 then
 					enemies (next_enemy) -> initialize (next_enemy, t,
 					    make_v (1 + Rand.Real * (MAP_M_SIZ - 1) + (i - 1) * MAP_M_SIZ, MAP_HEIGHT))
+				       else
+				       
+					enemies (next_enemy) -> initialize (next_enemy, t,
+					    make_v (1, 1 + Rand.Real * (MAP_M_SIZ - 1) + (j - 1) * MAP_M_SIZ))
+				       end if
 				    else
 					enemies (next_enemy) -> initialize (next_enemy, t,
-					    make_v (MAP_WIDTH, 1 + Rand.Real * (MAP_M_SIZ - 1) + (j - 1) * MAP_M_SIZ))
+					    make_v (1 + Rand.Real * (MAP_M_SIZ - 1) + (i - 1) * MAP_M_SIZ, MAP_HEIGHT))
 				    end if
-				elsif i = 1 then
+				elsif i = MAP_M_WID then
 				    enemies (next_enemy) -> initialize (next_enemy, t,
-					make_v (1 + Rand.Real * (MAP_M_SIZ - 1) + (i - 1) * MAP_M_SIZ, MAP_HEIGHT))
+					make_v (MAP_WIDTH, 1 + Rand.Real * (MAP_M_SIZ - 1) + (j - 1) * MAP_M_SIZ))
 				else
 				    enemies (next_enemy) -> initialize (next_enemy, t,
 					make_v (1, 1 + Rand.Real * (MAP_M_SIZ - 1) + (j - 1) * MAP_M_SIZ))
-				end if
-			    elsif i = MAP_M_WID then
-				enemies (next_enemy) -> initialize (next_enemy, t,
-				    make_v (MAP_WIDTH, 1 + Rand.Real * (MAP_M_SIZ - 1) + (j - 1) * MAP_M_SIZ))
-			    else
-				enemies (next_enemy) -> initialize (next_enemy, t,
-				    make_v (1, 1 + Rand.Real * (MAP_M_SIZ - 1) + (j - 1) * MAP_M_SIZ))
 
+				end if
+				%increment deque!
+				next_enemy := (next_enemy mod ENEMY_NUM) + 1
+				num_enemies += 1
+				if num_enemies >= ENEMY_NUM then
+				    can_spawn := false
+				end if
 			    end if
-			    %increment deque!
 			end if
 		    end if
 		end if
