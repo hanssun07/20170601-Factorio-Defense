@@ -31,19 +31,21 @@ loop
     %var e : ^Enemy
     %new e
     %e -> initialize (1, 1, make_v (Rand.Real * 49 + 1, 50))
-  %  for i : 1 .. 1000
-   
+    %  for i : 1 .. 1000
+
     % spawn_enemy(1)
-   % end for
+    % end for
     range_enemies (1) := 1
     var tick : int
     loop
 	tick := Time.Elapsed
-    
+
 	draw_map
 	%e -> draw
 	%e -> update (e -> v)
-	spawn_enemy(1)
+	for i : 1 .. 10
+	    spawn_enemy (1)
+	end for
 	for i : 1 .. 1000
 	    enemies (i) -> draw
 	    enemies (i) -> update (enemies (i) -> v)
@@ -60,9 +62,21 @@ loop
 	    end for
 	    path_map
 	end if
+
+	resolve_enemies
+
+	for i : 1 .. 10
+	    for j : 1 .. 10
+		locate (50-(j * 5-2), (i * 10-2))
+		put map_meta_sem (i) (j) ..
+	    end for
+	end for
+	locate (1,102)
+	put num_enemies:5..
+
 	View.Update
 	%exit when e -> v.state = NONEXISTENT
-	delay(16-Time.Elapsed+tick)
+	delay (30 - Time.Elapsed + tick)
     end loop
 
     % tick

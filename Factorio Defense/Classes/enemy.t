@@ -29,6 +29,7 @@ class Enemy
 	    return
 	end if
 	if v.health < 0 then
+	    unlock_sem (floor ((v.loc.x - 1) / MAP_M_SIZ) + 1, floor ((v.loc.y - 1) / MAP_M_SIZ) + 1, addr (v))
 	    v.state := DEAD
 	    return
 	end if
@@ -45,16 +46,29 @@ class Enemy
 		end if
 	    end if
 	else
-	    %add move code here; let there be a short cooldown when they
-	    %finish destroying something
 	    var movt : int := 0
+	    var dl : point
 	    if range_enemies (v.e_type) >= 5 then
 		movt := 1
 	    end if
-	    v.loc := add_v (v.loc, truncate (scale_v (map_mov (movt) (round (v.loc.x)) (round (v.loc.y)), 5), ENEMY_MVT_TILES_PER_SEC))
-	    if v.loc.y < 1 then
+	    dl := add_v (v.loc, truncate (scale_v (map_mov (movt) (round (v.loc.x)) (round (v.loc.y)), 5), ENEMY_MVT_TILES_PER_SEC))
+	    for i : max(1,((v.loc.x-1)/MAP_M_SIZ))..min(MAP_M_WID, (v.loc
+	    
+	    if dl.y >= 1 then
+		if (floor ((dl.x - 1) / MAP_M_SIZ) = floor ((v.loc.x-1) / MAP_M_SIZ) and floor ((dl.y - 1) / MAP_M_SIZ) = floor ((v.loc.y-1) / MAP_M_SIZ)) then
+		    v.loc := dl
+		else
+		    if lock_sem (floor ((dl.x - 1) / MAP_M_SIZ) + 1, floor ((dl.y - 1) / MAP_M_SIZ) + 1, addr (v)) then
+			unlock_sem (floor ((v.loc.x - 1) / MAP_M_SIZ) + 1, floor ((v.loc.y - 1) / MAP_M_SIZ) + 1, addr (v))
+			v.loc := dl
+		    end if
+		end if
+	    end if
+
+	    if dl.y < 1 then
 		v.state := NONEXISTENT
 		enemies_through += 1
+		unlock_sem (floor ((v.loc.x - 1) / MAP_M_SIZ) + 1, floor ((v.loc.y - 1) / MAP_M_SIZ) + 1, addr (v))
 	    else
 		request_new_target ()
 	    end if
