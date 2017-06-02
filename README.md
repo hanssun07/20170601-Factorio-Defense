@@ -10,3 +10,7 @@ In this game, one balances furthering production so as to escape the hostile pla
 
 ### Interface
 The map, which shows the current location of turrets and aliens at the entrance to the player's compound, is displayed as a grid on the left side of the screen. On the right is a list of stats and a slidebar, which the player uses to allocate their production. Availabe resources are shown next to their position on the slider.
+
+### How to Run this Game
+1. Download [Open Turing](tristan.hume.ca/openturing) and the _Factorio Defense_ folder in this repository.
+2. Open `Main.t` with Open Turing, and press `F1` or the `Run` button.
