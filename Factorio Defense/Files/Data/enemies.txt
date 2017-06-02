@@ -1,0 +1,48 @@
+Small Biter
+15
+60
+1
+4
+0 0 0 0
+Medium Biter
+75
+60
+1
+5
+40 -50 0 0
+Big Biter
+375
+60
+2
+6
+80 0 0 0
+Behemoth Biter
+5000
+60
+2
+7
+90 50 0 0
+Small Spitter
+10
+60
+15
+8
+0 0 0 0
+Medium Spitter
+50
+60
+15
+9
+0 0 0 0
+Big Spitter
+200
+60
+15
+10
+0 0 0 0
+Behemoth Spitter
+2000
+60
+15
+11
+0 0 0 0
