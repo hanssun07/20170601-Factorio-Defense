@@ -48,14 +48,49 @@ class Enemy
 	else
 	    var movt : int := 0
 	    var dl : point
+	    var dd : point
+	    var t : real
 	    if range_enemies (v.e_type) >= 5 then
 		movt := 1
 	    end if
-	    dl := add_v (v.loc, truncate (scale_v (map_mov (movt) (round (v.loc.x)) (round (v.loc.y)), 5), ENEMY_MVT_TILES_PER_SEC))
-	    for i : max(1,((v.loc.x-1)/MAP_M_SIZ))..min(MAP_M_WID, (v.loc
+
+	    %follow the flow field
+	    dl := scale_v (map_mov (movt) (round (v.loc.x)) (round (v.loc.y)), 5)
+
+	    %separate
+	    for i : floor (max (1, ((v.loc.x - 2) / MAP_M_SIZ) + 1)) .. floor (min (MAP_M_WID, (v.loc.x) / MAP_M_SIZ + 1))
+		for j : floor (max (1, ((v.loc.y - 2) / MAP_M_SIZ) + 1)) .. floor (min (MAP_M_HEI, (v.loc.y) / MAP_M_SIZ + 1))
+		    for k : 1 .. MAP_M_CAP
+			if map_meta (i) (j) (k) not= nil and addr ( ^ (map_meta (i) (j) (k))) not= addr (v) then
+			    if map_meta (i) (j) (k) -> class_type = ENEMY then
+				dd := diff_v (v.loc, map_meta (i) (j) (k) -> loc)
+				t := magnitude_squared (dd)
+				if t < 0.25 then
+				    dl := add_v (dl, scale_v (dd, 1.0 / t))
+				end if
+			    end if
+			end if
+		    end for
+		end for
+	    end for
+
+	    %move away from edges
+	    if v.loc.x < 2 then
+		dl.x += 1
+	    elsif v.loc.x > MAP_WIDTH-1 then
+		dl.x -= 1
+	    end if
+	    if v.loc.y > MAP_HEIGHT-1 then
+		dl.y -= 1
+	    elsif v.loc.y < 1 and abs(v.loc.x-MAP_HEIGHT/2) > 0.5 then
+		dl.y += 1
+	    end if
 	    
-	    if dl.y >= 1 then
-		if (floor ((dl.x - 1) / MAP_M_SIZ) = floor ((v.loc.x-1) / MAP_M_SIZ) and floor ((dl.y - 1) / MAP_M_SIZ) = floor ((v.loc.y-1) / MAP_M_SIZ)) then
+	    %move request
+	    dl := add_v (v.loc, truncate (dl, ENEMY_MVT_TILES_PER_SEC))
+
+	    if dl.y >= 1 and dl.y <= MAP_HEIGHT and dl.x >= 1 and dl.x <= MAP_WIDTH then
+		if (floor ((dl.x - 1) / MAP_M_SIZ) = floor ((v.loc.x - 1) / MAP_M_SIZ) and floor ((dl.y - 1) / MAP_M_SIZ) = floor ((v.loc.y - 1) / MAP_M_SIZ)) then
 		    v.loc := dl
 		else
 		    if lock_sem (floor ((dl.x - 1) / MAP_M_SIZ) + 1, floor ((dl.y - 1) / MAP_M_SIZ) + 1, addr (v)) then
@@ -79,6 +114,9 @@ class Enemy
 
     %draw
     proc draw ()
+	if v.state < ALIVE then
+	    return
+	end if
 	var dsc_x : int := round ((v.loc.x - 0.5) * PIXELS_PER_GRID)
 	var dsc_y : int := round ((v.loc.y - 0.5) * PIXELS_PER_GRID)
 	Draw.FillBox (dsc_x - 5, dsc_y - 5, dsc_x + 5, dsc_y + 5, brightred)

@@ -21,11 +21,10 @@ loop
     % initialize game
     begin_init
 
-    var k : int := Rand.Int (2, 49)
-    for i : 1 .. 50
-	map_deaths (i) (k - 1) := Rand.Real () * 50 + 50
-	map_deaths (i) (k) := Rand.Real () * 50 + 50
-	map_deaths (i) (k + 1) := Rand.Real () * 50 + 50
+    for k : 1 .. 50
+	for i : 1 .. 50
+	    map_deaths (i) (k) := i / 10
+	end for
     end for
     path_map
     %var e : ^Enemy
@@ -43,7 +42,7 @@ loop
 	draw_map
 	%e -> draw
 	%e -> update (e -> v)
-	for i : 1 .. 10
+	for i : 1 .. 1
 	    spawn_enemy (1)
 	end for
 	for i : 1 .. 1000
@@ -53,12 +52,10 @@ loop
 	    %    enemies (i) -> initialize (1, 1, make_v (Rand.Real * 49 + 1, 50))
 	    %end if
 	end for
-	if Rand.Real () <= 0.01 then
-	    k := Rand.Int (2, 49)
+	if Rand.Real () <= 0.00 then
+	    %k := Rand.Int (2, 49)
 	    for i : 1 .. 50
-		map_deaths (i) (k - 1) := Rand.Real () * 50 + 50
-		map_deaths (i) (k) := Rand.Real () * 50 + 50
-		map_deaths (i) (k + 1) := Rand.Real () * 50 + 50
+		%map_deaths (i) (k) += 50 + i
 	    end for
 	    path_map
 	end if
@@ -67,16 +64,16 @@ loop
 
 	for i : 1 .. 10
 	    for j : 1 .. 10
-		locate (50-(j * 5-2), (i * 10-2))
+		locate (50 - (j * 5 - 3), (i * 10 - 5))
 		put map_meta_sem (i) (j) ..
 	    end for
 	end for
-	locate (1,102)
-	put num_enemies:5..
+	locate (1, 102)
+	put num_enemies : 5 ..
 
 	View.Update
 	%exit when e -> v.state = NONEXISTENT
-	delay (30 - Time.Elapsed + tick)
+	delay (16 - Time.Elapsed + tick)
     end loop
 
     % tick

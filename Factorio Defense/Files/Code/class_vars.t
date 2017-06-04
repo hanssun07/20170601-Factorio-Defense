@@ -344,15 +344,17 @@ end path_map
 
 %will be overhauled later
 proc draw_map ()
-    var c : int := 28
-    Draw.FillBox (0, 0, MAP_WIDTH * PIXELS_PER_GRID, MAP_HEIGHT * PIXELS_PER_GRID, 27)
-    for i : 0 .. MAP_WIDTH - 1
-	for j : 0 .. MAP_HEIGHT - 1
-	    Draw.FillBox (i * PIXELS_PER_GRID, j * PIXELS_PER_GRID,
-		(i + 1) * PIXELS_PER_GRID - 2, (j + 1) * PIXELS_PER_GRID - 2, c)
-	end for
+    var tc : int := 28
+    var gl : int := 27
+
+    Draw.FillBox (0, 0, MAP_WIDTH * PIXELS_PER_GRID, MAP_HEIGHT * PIXELS_PER_GRID, tc)
+    for i : 1 .. MAP_WIDTH - 1
+	Draw.Line (PIXELS_PER_GRID * i, 1, PIXELS_PER_GRID * i, MAP_HEIGHT * PIXELS_PER_GRID, gl)
     end for
-    for i : 1 .. MAP_WIDTH
+    for i : 1 .. MAP_HEIGHT - 1
+	Draw.Line (1, PIXELS_PER_GRID * i, MAP_WIDTH * PIXELS_PER_GRID, PIXELS_PER_GRID * i, gl)
+    end for
+    for i : 1 .. 0%MAP_WIDTH
 	for j : 1 .. MAP_HEIGHT
 	    Draw.Line (round ((i - 0.5) * PIXELS_PER_GRID),
 		round ((j - 0.5) * PIXELS_PER_GRID),
@@ -383,14 +385,14 @@ proc spawn_enemy (t : int)
 						make_v (MAP_WIDTH, 1 + Rand.Real * (MAP_M_SIZ - 1) + (j - 1) * MAP_M_SIZ))
 					end if
 				    elsif i = 1 then
-				    if Rand.Real > 0.5 then
-					enemies (next_enemy) -> initialize (next_enemy, t,
-					    make_v (1 + Rand.Real * (MAP_M_SIZ - 1) + (i - 1) * MAP_M_SIZ, MAP_HEIGHT))
-				       else
-				       
-					enemies (next_enemy) -> initialize (next_enemy, t,
-					    make_v (1, 1 + Rand.Real * (MAP_M_SIZ - 1) + (j - 1) * MAP_M_SIZ))
-				       end if
+					if Rand.Real > 0.5 then
+					    enemies (next_enemy) -> initialize (next_enemy, t,
+						make_v (1 + Rand.Real * (MAP_M_SIZ - 1) + (i - 1) * MAP_M_SIZ, MAP_HEIGHT))
+					else
+
+					    enemies (next_enemy) -> initialize (next_enemy, t,
+						make_v (1, 1 + Rand.Real * (MAP_M_SIZ - 1) + (j - 1) * MAP_M_SIZ))
+					end if
 				    else
 					enemies (next_enemy) -> initialize (next_enemy, t,
 					    make_v (1 + Rand.Real * (MAP_M_SIZ - 1) + (i - 1) * MAP_M_SIZ, MAP_HEIGHT))
