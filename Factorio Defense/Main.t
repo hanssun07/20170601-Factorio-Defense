@@ -27,13 +27,6 @@ loop
 	end for
     end for
     path_map
-    %var e : ^Enemy
-    %new e
-    %e -> initialize (1, 1, make_v (Rand.Real * 49 + 1, 50))
-    %  for i : 1 .. 1000
-
-    % spawn_enemy(1)
-    % end for
     range_enemies (1) := 1
     var tick : int
     loop
@@ -59,6 +52,7 @@ loop
 	if num_enemies <= 0 and last_turret not= num_turrets then
 	    resolve_turrets
 	end if
+	resolve_targets
 	% check for win/lose-condition
 
 	%e -> draw

@@ -12,9 +12,9 @@ module Constants
     
     const FLOOR : int := -1
     const ENEMY : int := 0
-    const TURRET : int := 1
-    const WALL : int := 2
-    const FIRE : int := 3
+    const FIRE : int := 1
+    const TURRET : int := 2
+    const WALL : int := 6
 
     const ALIVE : int := 1
     const DEAD : int := 0

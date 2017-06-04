@@ -429,3 +429,97 @@ proc spawn_enemy (t : int)
 	end for
     end if
 end spawn_enemy
+
+proc resolve_targets
+    var u, v : entity_vars
+    var shortest : real := 4294967296.0
+    var cur : real
+    var check : int
+    
+    %enemies
+    for e : 1..ENEMY_NUM
+	exit when enemies_on_standby <= 0
+	if enemy_on_standby(e) then
+	    %easier on eyes
+	    v := enemies(e)->v
+	    
+	    %initialize min-finder
+	    shortest := 4294967296.0
+	    
+	    %check in the appropriate chunks
+	    for i : floor(max(1,(v.loc.x-range_enemies(v.e_type)-1)/MAP_M_SIZ+1)) ..
+		    floor(min(MAP_M_WID, (v.loc.x+range_enemies(v.e_type)-1)/MAP_M_SIZ+1))
+		for j : floor(max(1, (v.loc.y-range_enemies(v.e_type)-1)/MAP_M_SIZ+1))..
+			floor(min(MAP_M_HEI, (v.loc.y+range_enemies(v.e_type)-1)/MAP_M_SIZ+1))
+		    check := map_meta_sem(i)(j)
+		    for k : 1..MAP_M_CAP
+			exit when check <= 0
+			if map_meta(i)(j)(k) not= nil then
+			    if map_meta(i)(j)(k)->class_type >= TURRET then
+				%triple the effective distance if a wall
+				cur := distance_squared(map_meta(i)(j)(k)->loc, v.loc) * 
+				    map_meta(i)(j)(k)->class_type
+				if cur < shortest then
+				    u := ^(map_meta(i)(j)(k))
+				    shortest := cur
+				end if
+			    end if                            
+			    check -= 1
+			end if
+		    end for
+		end for
+	    end for
+	    
+	    if shortest >= 4294967295.0 or distance_squared(u.loc, v.loc) > range_enemies(v.e_type)**2 then
+		enemies(e)->v.cur_target := 0
+	    else
+		enemies(e)->v.cur_target := u.ind
+	    end if
+	    
+	    enemy_on_standby(e) := false
+	    enemies_on_standby -= 1
+	end if
+    end for
+    
+    %turrets
+    for t : 1..TURRET_NUM
+	exit when turrets_on_standby <= 0
+	if turret_on_standby(t) then
+	    %easier on eyes
+	    v := turrets(t)->v
+	    
+	    %initialize min-finder
+	    shortest := 4294967296.0
+	    
+	    for i : floor(max(1,(v.loc.x-range_turrets(v.e_type)-1)/MAP_M_SIZ+1)) ..
+		    floor(min(MAP_M_WID, (v.loc.x+range_turrets(v.e_type)-1)/MAP_M_SIZ+1))
+		for j : floor(max(1, (v.loc.y-range_turrets(v.e_type)-1)/MAP_M_SIZ+1))..
+			floor(min(MAP_M_HEI, (v.loc.y+range_turrets(v.e_type)-1)/MAP_M_SIZ+1))
+		    check := map_meta_sem(i)(j)
+		    for k : 1..MAP_M_CAP
+			exit when check <= 0
+			if map_meta(i)(j)(k) not= nil then
+			    if map_meta(i)(j)(k)->class_type = ENEMY then
+				cur := distance_squared(map_meta(i)(j)(k)->loc, v.loc)
+				if cur < shortest then
+				    u := ^(map_meta(i)(j)(k))
+				    shortest := cur
+				end if
+			    end if                            
+			    check -= 1
+			end if
+		    end for
+		end for
+	    end for
+	    
+	    if shortest >= 4294967295.0 or distance_squared(u.loc, v.loc) > range_turrets(v.e_type)**2 then
+		turrets(e)->v.cur_target := 0
+	    else
+		turrets(e)->v.cur_target := u.ind
+	    end if
+	    
+	    turret_on_standby(e) := false
+	    turrets_on_standby -= 1
+	end if
+    end for
+end resolve_targets
