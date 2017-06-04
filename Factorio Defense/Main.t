@@ -21,13 +21,30 @@ loop
     % initialize game
     begin_init
 
-    for k : 1 .. 50
-	for i : 1 .. 50 
-	    map_deaths (i) (k) := sin(i/5) + cos(k/5)*2%*Rand.Real()*50
-	end for
-    end for
+    %for k : 1 .. 50
+    %    for i : 1 .. 50
+    %        map_deaths (i) (k) := sin(i/5) + cos(k/5)*2%*Rand.Real()*50
+    %    end for
+    %end for
     path_map
     range_enemies (1) := 1
+
+    turrets (1) -> initialize (1, 3, make_v (25.5, 3.5))
+    last_turret += 1
+    num_turrets += 1
+    var garbage : boolean
+    for i : floor (max (1, (25.5 - 1.5) / MAP_M_SIZ + 1)) .. floor (min (MAP_M_WID, (25.5 - 0.5) / MAP_M_SIZ) + 1)
+	for j : floor (max (1, (3.5 - 1.5) / MAP_M_SIZ + 1)) .. floor (min (MAP_M_HEI, (3.5 - 0.5) / MAP_M_SIZ) + 1)
+	    garbage := lock_sem (i, j, addr (turrets (1) -> v))
+	end for
+    end for
+    for i : 25 .. 26
+	for j : 3 .. 4
+	    cheat(addressint, map(i)(j)) := addr(turrets(1)->v)
+	end for
+    end for
+     reload_turrets(3) := 0
+
     var tick : int
     loop
 	tick := Time.Elapsed
@@ -36,15 +53,23 @@ loop
 	% draw the map
 	draw_map
 	% update all turrets
+	turrets (1) -> v.effective_health := 1000
+	turrets (1) -> v.health := 1000
+	turrets (1) -> update
+	turrets (1) -> draw
 	% update all enemies
-	for i : 1..ENEMY_NUM
-	    enemies(i)->pre_update
+	for i : 1 .. ENEMY_NUM
+	    enemies (i) -> pre_update
 	end for
 	for i : 1 .. ENEMY_NUM
-	    enemies (i) -> update (enemies (i) -> v)
+	    enemies (i) -> update
 	    enemies (i) -> draw
 	end for
 	% update all projectiles
+	for i : 1 .. PROJ_NUM
+	    projectiles (i) -> update
+	    projectiles (i) -> draw
+	end for
 	% update all stats
 	% do cleanups
 	resolve_enemies
@@ -58,25 +83,23 @@ loop
 	%e -> draw
 	%e -> update (e -> v)
 
-	for i : 1 .. 1
-	    spawn_enemy (1)
+	for i : 1 .. Rand.Int (1,1)
+	    spawn_enemy (Rand.Int(1,1)+Rand.Int(0,1)*4)
 	end for
 	if Rand.Real () <= 0.00 then
-	    %k := Rand.Int (2, 49)
-	    for i : 1 .. 50
-		%map_deaths (i) (k) += 50 + i
+	    for i : 1 .. MAP_WIDTH
+		for j : 1 .. MAP_HEIGHT
+		    map_deaths (i) (j) -= .027777
+		    if map_deaths (i) (j) < 0 then
+			map_deaths (i) (j) := 0
+		    end if
+		end for
 	    end for
 	    path_map
 	end if
 
 	resolve_enemies
 
-	for i : 1 .. 0%MAP_M_WID
-	    for j : 1 .. MAP_M_HEI
-		locate (50 - floor((j-0.5) * MAP_M_SIZ), floor((i-0.5) * MAP_M_SIZ*2))
-		put map_meta_sem (i) (j) ..
-	    end for
-	end for
 	locate (1, 102)
 	put num_enemies : 5 ..
 

@@ -25,7 +25,7 @@ module Constants
     const ENEMY_T_NUM : int := 8
     const PROJ_NUM : int := 100
     const TURRET_NUM : int := 100
-    const ENEMY_NUM : int := 1000
+    const ENEMY_NUM : int := 100
     const PROJ_QUEUE_NUM : int := (TURRET_NUM + ENEMY_NUM) div 2
     
     const ENEMY_MVT_TILES_PER_SEC : real := 0.16
@@ -38,7 +38,7 @@ module Constants
     const MAP_B_W_U : int := MAP_WIDTH-10   %map "build allowed" width upper limit
     const MAP_B_H_L : int := 1              %map "build allowed" height lower limit
     const MAP_B_H_U : int := MAP_HEIGHT-10  %map "build allowed" height upper limit
-    const MAP_M_SIZ : int := 1                          %metamap block size
+    const MAP_M_SIZ : int := 5                          %metamap block size
     const MAP_M_WID : int := MAP_WIDTH div MAP_M_SIZ    %width of metamap
     const MAP_M_HEI : int := MAP_HEIGHT div MAP_M_SIZ   %height of metamap
     const MAP_M_CAP : int := MAP_M_SIZ * MAP_M_SIZ * 5  %cap of entities per block
