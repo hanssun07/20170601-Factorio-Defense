@@ -123,7 +123,7 @@ proc begin_init ()
     num_proj_queue := 0
     can_fire := true
     enemies_through := 0
-    chunks_avail_for_spawn := MAP_M_SIZ * MAP_M_SIZ * 2
+    chunks_avail_for_spawn := MAP_M_WID + MAP_M_HEI * 2 - 2
 end begin_init
 
 proc resolve_projectiles ()
@@ -150,6 +150,7 @@ proc resolve_projectiles ()
     %queue.
     loop
 	exit when projectiles (last_projectile) -> v.state not= NONEXISTENT
+	exit when num_projectiles <= 0
 	num_projectiles -= 1
 	last_projectile := (last_projectile mod PROJ_NUM) + 1
     end loop
@@ -340,6 +341,15 @@ proc path_map ()
 	    end for
 	end if
     end loop
+
+    for i : 1 .. MAP_WIDTH
+	for j : 1 .. MAP_HEIGHT
+	    for k : 0 .. 1
+		map_mov (k) (i) (j) := normalize (map_mov (k) (i) (j))
+	    end for
+	end for
+    end for
+
 end path_map
 
 %will be overhauled later
@@ -367,7 +377,7 @@ end draw_map
 
 proc spawn_enemy (t : int)
     if can_spawn then
-	var chunk_chosen := Rand.Int (1, chunks_avail_for_spawn)
+	var chunk_chosen := Rand.Int (1, max(1,chunks_avail_for_spawn))
 	for i : 1 .. MAP_M_WID
 	    for decreasing j : MAP_M_HEI .. 1
 		if j = MAP_M_HEI or (i = 1 or i = MAP_M_WID) then

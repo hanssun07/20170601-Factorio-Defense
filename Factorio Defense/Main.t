@@ -22,8 +22,8 @@ loop
     begin_init
 
     for k : 1 .. 50
-	for i : 1 .. 50
-	    map_deaths (i) (k) := i / 10
+	for i : 1 .. 50 
+	    map_deaths (i) (k) := sin(i/5) + cos(k/5)*2%*Rand.Real()*50
 	end for
     end for
     path_map
@@ -39,18 +39,33 @@ loop
     loop
 	tick := Time.Elapsed
 
+	% check for input
+	% draw the map
 	draw_map
+	% update all turrets
+	% update all enemies
+	for i : 1..ENEMY_NUM
+	    enemies(i)->pre_update
+	end for
+	for i : 1 .. ENEMY_NUM
+	    enemies (i) -> update (enemies (i) -> v)
+	    enemies (i) -> draw
+	end for
+	% update all projectiles
+	% update all stats
+	% do cleanups
+	resolve_enemies
+	resolve_projectiles
+	if num_enemies <= 0 and last_turret not= num_turrets then
+	    resolve_turrets
+	end if
+	% check for win/lose-condition
+
 	%e -> draw
 	%e -> update (e -> v)
+
 	for i : 1 .. 1
 	    spawn_enemy (1)
-	end for
-	for i : 1 .. 1000
-	    enemies (i) -> draw
-	    enemies (i) -> update (enemies (i) -> v)
-	    %if enemies (i) -> v.state = NONEXISTENT then
-	    %    enemies (i) -> initialize (1, 1, make_v (Rand.Real * 49 + 1, 50))
-	    %end if
 	end for
 	if Rand.Real () <= 0.00 then
 	    %k := Rand.Int (2, 49)
@@ -62,9 +77,9 @@ loop
 
 	resolve_enemies
 
-	for i : 1 .. 10
-	    for j : 1 .. 10
-		locate (50 - (j * 5 - 3), (i * 10 - 5))
+	for i : 1 .. 0%MAP_M_WID
+	    for j : 1 .. MAP_M_HEI
+		locate (50 - floor((j-0.5) * MAP_M_SIZ), floor((i-0.5) * MAP_M_SIZ*2))
 		put map_meta_sem (i) (j) ..
 	    end for
 	end for
@@ -75,15 +90,6 @@ loop
 	%exit when e -> v.state = NONEXISTENT
 	delay (16 - Time.Elapsed + tick)
     end loop
-
-    % tick
-    % check for input
-    % update all turrets
-    % update all enemies
-    % update all projectiles
-    % update all stats
-    % check for win/lose-condition
-
     % loop back to menu if play again
 end loop
 

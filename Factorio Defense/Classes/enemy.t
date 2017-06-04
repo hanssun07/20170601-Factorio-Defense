@@ -2,6 +2,7 @@ class Enemy
     export var all
 
     var v : entity_vars
+    var dl : point
 
     forward proc request_new_target ()
     forward proc fire_projectile (var u : entity_vars)
@@ -21,6 +22,7 @@ class Enemy
 	v.e_type := et
 	v.loc := l
 	v.class_type := ENEMY
+	dl := make_v (0, 0)
     end initialize
 
     %update every tick
@@ -46,49 +48,6 @@ class Enemy
 		end if
 	    end if
 	else
-	    var movt : int := 0
-	    var dl : point
-	    var dd : point
-	    var t : real
-	    if range_enemies (v.e_type) >= 5 then
-		movt := 1
-	    end if
-
-	    %follow the flow field
-	    dl := scale_v (map_mov (movt) (round (v.loc.x)) (round (v.loc.y)), 5)
-
-	    %separate
-	    for i : floor (max (1, ((v.loc.x - 2) / MAP_M_SIZ) + 1)) .. floor (min (MAP_M_WID, (v.loc.x) / MAP_M_SIZ + 1))
-		for j : floor (max (1, ((v.loc.y - 2) / MAP_M_SIZ) + 1)) .. floor (min (MAP_M_HEI, (v.loc.y) / MAP_M_SIZ + 1))
-		    for k : 1 .. MAP_M_CAP
-			if map_meta (i) (j) (k) not= nil and addr ( ^ (map_meta (i) (j) (k))) not= addr (v) then
-			    if map_meta (i) (j) (k) -> class_type = ENEMY then
-				dd := diff_v (v.loc, map_meta (i) (j) (k) -> loc)
-				t := magnitude_squared (dd)
-				if t < 0.25 then
-				    dl := add_v (dl, scale_v (dd, 1.0 / t))
-				end if
-			    end if
-			end if
-		    end for
-		end for
-	    end for
-
-	    %move away from edges
-	    if v.loc.x < 2 then
-		dl.x += 1
-	    elsif v.loc.x > MAP_WIDTH-1 then
-		dl.x -= 1
-	    end if
-	    if v.loc.y > MAP_HEIGHT-1 then
-		dl.y -= 1
-	    elsif v.loc.y < 1 and abs(v.loc.x-MAP_HEIGHT/2) > 0.5 then
-		dl.y += 1
-	    end if
-	    
-	    %move request
-	    dl := add_v (v.loc, truncate (dl, ENEMY_MVT_TILES_PER_SEC))
-
 	    if dl.y >= 1 and dl.y <= MAP_HEIGHT and dl.x >= 1 and dl.x <= MAP_WIDTH then
 		if (floor ((dl.x - 1) / MAP_M_SIZ) = floor ((v.loc.x - 1) / MAP_M_SIZ) and floor ((dl.y - 1) / MAP_M_SIZ) = floor ((v.loc.y - 1) / MAP_M_SIZ)) then
 		    v.loc := dl
@@ -111,6 +70,59 @@ class Enemy
 
 	v.cooldown -= 1
     end update
+
+    proc pre_update ()
+	if v.state = NONEXISTENT or v.state = DEAD then
+	    return
+	end if
+	var movt : int := 0
+	var dd : point
+	var t : real
+	if range_enemies (v.e_type) >= 5 then
+	    movt := 1
+	end if
+
+	%follow the flow field
+	dl := make_v (0, 0)
+	for i : round (max (1, v.loc.x - 0.5)) .. round (min (MAP_WIDTH, v.loc.x + 0.5))
+	    for j : round (max (1, v.loc.y - 0.5)) .. round (min (MAP_HEIGHT, v.loc.y + 0.5))
+		dl := add_v (dl, scale_v (map_mov (movt) (i) (j), (1 - abs (v.loc.x - i)) * (1 - abs (v.loc.y - j))))
+	    end for
+	end for
+
+	dl := scale_v (dl, 1)
+
+	%separate
+	for i : floor (max (1, ((v.loc.x - 2) / MAP_M_SIZ) + 1)) .. floor (min (MAP_M_WID, (v.loc.x) / MAP_M_SIZ + 1))
+	    for j : floor (max (1, ((v.loc.y - 2) / MAP_M_SIZ) + 1)) .. floor (min (MAP_M_HEI, (v.loc.y) / MAP_M_SIZ + 1))
+		for k : 1 .. MAP_M_CAP
+		    if map_meta (i) (j) (k) not= nil and addr ( ^ (map_meta (i) (j) (k))) not= addr (v) then
+			if map_meta (i) (j) (k) -> class_type = ENEMY then
+			    dd := diff_v (v.loc, map_meta (i) (j) (k) -> loc)
+			    t := magnitude_squared (dd)
+			    if t < 1 and t > 0 then
+				dl := add_v (dl, scale_v (dd, (1.0-sqrt(t))/t))
+			    end if
+			end if
+		    end if
+		end for
+	    end for
+	end for
+	%move away from edges
+	if v.loc.x < 1.5 and dl.x < 0 then
+	    dl.x := 1.5 - v.loc.x
+	elsif v.loc.x > MAP_WIDTH - 0.5 and dl.x > 0 then
+	    dl.x := MAP_WIDTH - 0.5 - v.loc.x
+	end if
+	if v.loc.y > MAP_HEIGHT - 0.5 and dl.y > 0 then
+	    dl.y := MAP_HEIGHT - 0.5 - v.loc.y
+	elsif v.loc.y < 1.5 and dl.y < 0 and abs (v.loc.x - MAP_WIDTH / 2) > 3 then
+	    dl.y := 1.5-v.loc.y
+	end if
+
+	%move request
+	dl := add_v (v.loc, truncate (dl, ENEMY_MVT_TILES_PER_SEC))
+    end pre_update
 
     %draw
     proc draw ()

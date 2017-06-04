@@ -168,11 +168,7 @@ module Class_Vars
     var map_deaths : array 1 .. MAP_WIDTH of array 1 .. MAP_HEIGHT of real
 
     fcn lock_sem (x, y : int, e : cheat
-	unchecked ^entity_vars) : boolean
-	
-	locate (2,102)
-	put x:10,y:10..
-	
+	unchecked ^entity_vars) : boolean        
 	if map_meta_sem (x) (y) > 0 then
 	    map_meta_sem (x) (y) -= 1
 	    for i : 1 .. MAP_M_CAP
