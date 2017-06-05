@@ -2,13 +2,14 @@ class Enemy
     export var all
 
     var v : entity_vars
+    var dl : point
 
     forward proc request_new_target ()
-    forward proc fire_projectile (var u : entity_vars)
+    forward proc fire_projectile (u : unchecked ^entity_vars)
 
     proc initialize (i, et : int, l : point)
 	v.ind := i
-	v.cur_target := 0
+	v.cur_target := nil
 	v.state := ALIVE
 	if et > 0 then
 	    v.health := max_healths_enemies (et)
@@ -21,41 +22,35 @@ class Enemy
 	v.e_type := et
 	v.loc := l
 	v.class_type := ENEMY
+	dl := make_v (0, 0)
     end initialize
 
     %update every tick
-    proc update (var u : entity_vars)
+    proc update ()
 	if v.state = NONEXISTENT or v.state = DEAD then
 	    return
 	end if
-	if v.health < 0 then
+	if v.health <= 0 then
 	    unlock_sem (floor ((v.loc.x - 1) / MAP_M_SIZ) + 1, floor ((v.loc.y - 1) / MAP_M_SIZ) + 1, addr (v))
 	    v.state := DEAD
+	    map_deaths (floor (v.loc.x)) (floor (v.loc.y)) += 1
 	    return
 	end if
-	if v.cur_target > 0 then
-	    if u.state = DEAD then
+	if v.cur_target not= nil and Rand.Real > 0.01 then
+	    if v.cur_target -> state = DEAD then
 		request_new_target ()
-	    elsif u.effective_health <= 0 then
+	    elsif v.cur_target -> effective_health <= 0 then
 		request_new_target ()
-	    elsif distance_squared (v.loc, u.loc) > range_enemies (v.e_type) ** 2 then
+	    elsif distance_squared (v.loc, v.cur_target -> loc) > range_enemies (v.e_type) ** 2 then
 		request_new_target ()
 	    else
 		if v.cooldown <= 0 then
-		    fire_projectile (u)
+		    fire_projectile (v.cur_target)
 		end if
 	    end if
 	else
-	    var movt : int := 0
-	    var dl : point
-	    if range_enemies (v.e_type) >= 5 then
-		movt := 1
-	    end if
-	    dl := add_v (v.loc, truncate (scale_v (map_mov (movt) (round (v.loc.x)) (round (v.loc.y)), 5), ENEMY_MVT_TILES_PER_SEC))
-	    for i : max(1,((v.loc.x-1)/MAP_M_SIZ))..min(MAP_M_WID, (v.loc
-	    
-	    if dl.y >= 1 then
-		if (floor ((dl.x - 1) / MAP_M_SIZ) = floor ((v.loc.x-1) / MAP_M_SIZ) and floor ((dl.y - 1) / MAP_M_SIZ) = floor ((v.loc.y-1) / MAP_M_SIZ)) then
+	    if dl.y >= 1 and dl.y <= MAP_HEIGHT and dl.x >= 1 and dl.x <= MAP_WIDTH then
+		if (floor ((dl.x - 1) / MAP_M_SIZ) = floor ((v.loc.x - 1) / MAP_M_SIZ) and floor ((dl.y - 1) / MAP_M_SIZ) = floor ((v.loc.y - 1) / MAP_M_SIZ)) then
 		    v.loc := dl
 		else
 		    if lock_sem (floor ((dl.x - 1) / MAP_M_SIZ) + 1, floor ((dl.y - 1) / MAP_M_SIZ) + 1, addr (v)) then
@@ -77,8 +72,69 @@ class Enemy
 	v.cooldown -= 1
     end update
 
+    proc pre_update ()
+	if v.state = NONEXISTENT or v.state = DEAD then
+	    return
+	end if
+	var movt : int := 0
+	var dd : point
+	var t : real
+	if range_enemies (v.e_type) >= 5 then
+	    movt := 1
+	end if
+
+	%follow the flow field
+	dl := make_v (0, 0)
+	for i : round (max (1, v.loc.x - 0.5)) .. round (min (MAP_WIDTH, v.loc.x + 0.5))
+	    for j : round (max (1, v.loc.y - 0.5)) .. round (min (MAP_HEIGHT, v.loc.y + 0.5))
+		dl := add_v (dl, scale_v (map_mov (movt) (i) (j), (1 - abs (v.loc.x - i)) * (1 - abs (v.loc.y - j))))
+	    end for
+	end for
+
+	dl := scale_v (dl, 1)
+
+	%separate
+	for i : floor (max (1, ((v.loc.x - 2) / MAP_M_SIZ) + 1)) .. floor (min (MAP_M_WID, (v.loc.x) / MAP_M_SIZ + 1))
+	    for j : floor (max (1, ((v.loc.y - 2) / MAP_M_SIZ) + 1)) .. floor (min (MAP_M_HEI, (v.loc.y) / MAP_M_SIZ + 1))
+		movt := map_meta_sem (i) (j)
+		for k : 1 .. MAP_M_CAP
+		    exit when movt <= 0
+		    if map_meta (i) (j) (k) not= nil then
+			if addr ( ^ (map_meta (i) (j) (k))) not= addr (v) then
+			    if map_meta (i) (j) (k) -> class_type = ENEMY then
+				dd := diff_v (v.loc, map_meta (i) (j) (k) -> loc)
+				t := magnitude_squared (dd)
+				if t < 1 and t > 0 then
+				    dl := add_v (dl, scale_v (dd, (1.0 - sqrt (t)) / t))
+				end if
+			    end if
+			end if
+			movt-=1
+		    end if
+		end for
+	    end for
+	end for
+	%move away from edges
+	if v.loc.x < 1.5 and dl.x < 0 then
+	    dl.x := 1.5 - v.loc.x
+	elsif v.loc.x > MAP_WIDTH - 0.5 and dl.x > 0 then
+	    dl.x := MAP_WIDTH - 0.5 - v.loc.x
+	end if
+	if v.loc.y > MAP_HEIGHT - 0.5 and dl.y > 0 then
+	    dl.y := MAP_HEIGHT - 0.5 - v.loc.y
+	elsif v.loc.y < 1.5 and dl.y < 0 and abs (v.loc.x - MAP_WIDTH / 2) > 3 then
+	    dl.y := 1.5 - v.loc.y
+	end if
+
+	%move request
+	dl := add_v (v.loc, truncate (dl, ENEMY_MVT_TILES_PER_SEC))
+    end pre_update
+
     %draw
     proc draw ()
+	if v.state < ALIVE then
+	    return
+	end if
 	var dsc_x : int := round ((v.loc.x - 0.5) * PIXELS_PER_GRID)
 	var dsc_y : int := round ((v.loc.y - 0.5) * PIXELS_PER_GRID)
 	Draw.FillBox (dsc_x - 5, dsc_y - 5, dsc_x + 5, dsc_y + 5, brightred)
@@ -97,28 +153,26 @@ class Enemy
 	end if
     end request_new_target
 
-    proc assign_target (t : int)
-	v.cur_target := t
-    end assign_target
-
-    body proc fire_projectile (var u : entity_vars)
+    body proc fire_projectile (u : unchecked ^entity_vars)
 	if not can_fire then
 	    return
 	end if
 
-	proj_queue (next_proj_queue).target := u.ind
-	proj_queue (next_proj_queue).target_type := u.class_type
+	proj_queue (next_proj_queue).target := u
+	%proj_queue (next_proj_queue).target_type := u.class_type
 	proj_queue (next_proj_queue).p_type := proj_enemies (v.e_type)
 	proj_queue (next_proj_queue).loc := v.loc
 	proj_queue (next_proj_queue).state := ALIVE
 
-	u.effective_health -= proj_damage (proj_enemies (v.ind))
+	u -> effective_health -= proj_damage (proj_enemies (v.e_type))
 
 	next_proj_queue := (next_proj_queue mod PROJ_QUEUE_NUM) + 1
 	num_proj_queue += 1
 	if num_proj_queue >= PROJ_QUEUE_NUM then
 	    can_fire := false
 	end if
+
+	v.cooldown := reload_enemies (v.e_type)
     end fire_projectile
 
 end Enemy

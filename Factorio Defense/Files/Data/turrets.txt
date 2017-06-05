@@ -14,7 +14,7 @@ Flamethrower Turret
 20 100 0 50
 Laser Turret
 1000
-20
+16
 25
 3
 3796

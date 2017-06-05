@@ -100,17 +100,9 @@ end Point
 module Class_Vars
     export var pervasive unqualified all
 
-    type proj_vars :
-	record
-	    target : int
-	    target_type : int
-	    p_type : int
-	    loc : point
-	    state : int
-	end record
     type entity_vars :
 	record
-	    cur_target : int
+	    cur_target : unchecked ^entity_vars
 	    state : int
 	    health : int
 	    effective_health : int
@@ -119,6 +111,14 @@ module Class_Vars
 	    cooldown : int
 	    ind : int
 	    class_type : int
+	end record
+    type proj_vars :
+	record
+	    target : unchecked ^entity_vars
+	    %target_type : int
+	    p_type : int
+	    loc : point
+	    state : int
 	end record
     type path_vars :
 	record
@@ -129,7 +129,7 @@ module Class_Vars
 
     fcn make_ev (s, h, et, cd, i, ct : int, l : point) : entity_vars
 	var e : entity_vars
-	e.cur_target := 0
+	e.cur_target := nil
 	e.state := s
 	e.health := h
 	e.effective_health := e.health
@@ -168,7 +168,7 @@ module Class_Vars
     var map_deaths : array 1 .. MAP_WIDTH of array 1 .. MAP_HEIGHT of real
 
     fcn lock_sem (x, y : int, e : cheat
-	unchecked ^entity_vars) : boolean
+	unchecked ^entity_vars) : boolean        
 	if map_meta_sem (x) (y) > 0 then
 	    map_meta_sem (x) (y) -= 1
 	    for i : 1 .. MAP_M_CAP

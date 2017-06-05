@@ -21,29 +21,30 @@ class Projectile
     var v : proj_vars
 
 
-    proc initialize (t, tt, pt : int, l : point)
+    proc initialize (t : cheat
+	unchecked ^entity_vars, pt : int, l : point)
 	v.target := t
-	v.target_type := tt
+	%v.target_type := tt
 	v.p_type := pt
 	v.loc := l
 	v.state := ALIVE
     end initialize
 
     %update
-    proc update (var u : entity_vars)
+    proc update ()
 	%only if projectile is alive
 	if v.state = ALIVE then
 	    %if the target is alive, work; otherwise, projectile is now invalid
-	    if u.state = ALIVE then
+	    if v.target -> state = ALIVE then
 		%if within range, do damage and invalidate; otherwise,
 		%move closer
-		if distance_squared (u.loc, v.loc) <= 0.25 then
-		    u.health -= proj_damage (v.p_type)
+		if distance_squared (v.target -> loc, v.loc) <= 0.25 then
+		    v.target -> health -= proj_damage (v.p_type)
 		    v.state := NONEXISTENT
 		else
 		    v.loc := add_v (v.loc,
 			truncate (
-			diff_v (u.loc, v.loc),
+			diff_v (v.target -> loc, v.loc),
 			proj_speed (v.p_type)))
 		end if
 	    else
@@ -59,5 +60,11 @@ class Projectile
 	%    (loc.x - .5) * pixels_per_grid,
 	%    (loc.y - .5) * pixels_per_grid,
 	%    picMerge)
+	if v.state < ALIVE then
+	    return
+	end if
+	var dsc_x : int := round ((v.loc.x - 0.5) * PIXELS_PER_GRID)
+	var dsc_y : int := round ((v.loc.y - 0.5) * PIXELS_PER_GRID)
+	Draw.FillBox(dsc_x-1, dsc_y-1,dsc_x+1,dsc_y+1, v.p_type+32)
     end draw
 end Projectile

@@ -48,6 +48,7 @@ proc read_data ()
     for i : 1 .. PROJ_T_NUM
 	exit when eof (f)
 	get : f, proj_damage (i), proj_speed (i), proj_dmg_type (i)
+	proj_speed (i) /= 60
     end for
     close : f
     open : f, "Files\\Data\\turrets.txt", get
@@ -110,7 +111,7 @@ proc begin_init ()
 	enemy_on_standby (i) := false
     end for
     for i : 1 .. PROJ_NUM
-	projectiles (i) -> initialize (0, FLOOR, 0, make_v (0, 0))
+	projectiles (i) -> initialize (0, FLOOR, make_v (0, 0))
 	projectiles (i) -> v.state := NONEXISTENT
     end for
     turrets_on_standby := 0
@@ -123,7 +124,7 @@ proc begin_init ()
     num_proj_queue := 0
     can_fire := true
     enemies_through := 0
-    chunks_avail_for_spawn := MAP_M_SIZ * MAP_M_SIZ * 2
+    chunks_avail_for_spawn := MAP_M_WID + MAP_M_HEI * 2 - 2
 end begin_init
 
 proc resolve_projectiles ()
@@ -135,7 +136,7 @@ proc resolve_projectiles ()
 
 	projectiles (next_projectile) -> initialize (
 	    proj_queue (last_proj_queue).target,
-	    proj_queue (last_proj_queue).target_type,
+	% proj_queue (last_proj_queue).target_type,
 	    proj_queue (last_proj_queue).p_type,
 	    proj_queue (last_proj_queue).loc)
 
@@ -150,6 +151,7 @@ proc resolve_projectiles ()
     %queue.
     loop
 	exit when projectiles (last_projectile) -> v.state not= NONEXISTENT
+	exit when num_projectiles <= 0
 	num_projectiles -= 1
 	last_projectile := (last_projectile mod PROJ_NUM) + 1
     end loop
@@ -340,19 +342,30 @@ proc path_map ()
 	    end for
 	end if
     end loop
+
+    for i : 1 .. MAP_WIDTH
+	for j : 1 .. MAP_HEIGHT
+	    for k : 0 .. 1
+		map_mov (k) (i) (j) := normalize (map_mov (k) (i) (j))
+	    end for
+	end for
+    end for
+
 end path_map
 
 %will be overhauled later
 proc draw_map ()
-    var c : int := 28
-    Draw.FillBox (0, 0, MAP_WIDTH * PIXELS_PER_GRID, MAP_HEIGHT * PIXELS_PER_GRID, 27)
-    for i : 0 .. MAP_WIDTH - 1
-	for j : 0 .. MAP_HEIGHT - 1
-	    Draw.FillBox (i * PIXELS_PER_GRID, j * PIXELS_PER_GRID,
-		(i + 1) * PIXELS_PER_GRID - 2, (j + 1) * PIXELS_PER_GRID - 2, c)
-	end for
+    var tc : int := 28
+    var gl : int := 27
+
+    Draw.FillBox (0, 0, MAP_WIDTH * PIXELS_PER_GRID, MAP_HEIGHT * PIXELS_PER_GRID, tc)
+    for i : 1 .. MAP_WIDTH - 1
+	Draw.Line (PIXELS_PER_GRID * i, 1, PIXELS_PER_GRID * i, MAP_HEIGHT * PIXELS_PER_GRID, gl)
     end for
-    for i : 1 .. MAP_WIDTH
+    for i : 1 .. MAP_HEIGHT - 1
+	Draw.Line (1, PIXELS_PER_GRID * i, MAP_WIDTH * PIXELS_PER_GRID, PIXELS_PER_GRID * i, gl)
+    end for
+    for i : 1 .. 0 %MAP_WIDTH
 	for j : 1 .. MAP_HEIGHT
 	    Draw.Line (round ((i - 0.5) * PIXELS_PER_GRID),
 		round ((j - 0.5) * PIXELS_PER_GRID),
@@ -365,7 +378,7 @@ end draw_map
 
 proc spawn_enemy (t : int)
     if can_spawn then
-	var chunk_chosen := Rand.Int (1, chunks_avail_for_spawn)
+	var chunk_chosen := Rand.Int (1, max (1, chunks_avail_for_spawn))
 	for i : 1 .. MAP_M_WID
 	    for decreasing j : MAP_M_HEI .. 1
 		if j = MAP_M_HEI or (i = 1 or i = MAP_M_WID) then
@@ -383,14 +396,14 @@ proc spawn_enemy (t : int)
 						make_v (MAP_WIDTH, 1 + Rand.Real * (MAP_M_SIZ - 1) + (j - 1) * MAP_M_SIZ))
 					end if
 				    elsif i = 1 then
-				    if Rand.Real > 0.5 then
-					enemies (next_enemy) -> initialize (next_enemy, t,
-					    make_v (1 + Rand.Real * (MAP_M_SIZ - 1) + (i - 1) * MAP_M_SIZ, MAP_HEIGHT))
-				       else
-				       
-					enemies (next_enemy) -> initialize (next_enemy, t,
-					    make_v (1, 1 + Rand.Real * (MAP_M_SIZ - 1) + (j - 1) * MAP_M_SIZ))
-				       end if
+					if Rand.Real > 0.5 then
+					    enemies (next_enemy) -> initialize (next_enemy, t,
+						make_v (1 + Rand.Real * (MAP_M_SIZ - 1) + (i - 1) * MAP_M_SIZ, MAP_HEIGHT))
+					else
+
+					    enemies (next_enemy) -> initialize (next_enemy, t,
+						make_v (1, 1 + Rand.Real * (MAP_M_SIZ - 1) + (j - 1) * MAP_M_SIZ))
+					end if
 				    else
 					enemies (next_enemy) -> initialize (next_enemy, t,
 					    make_v (1 + Rand.Real * (MAP_M_SIZ - 1) + (i - 1) * MAP_M_SIZ, MAP_HEIGHT))
@@ -417,3 +430,127 @@ proc spawn_enemy (t : int)
 	end for
     end if
 end spawn_enemy
+
+proc resolve_targets
+    var u : unchecked ^entity_vars
+    var v : entity_vars
+    var shortest : real := 4294967296.0
+    var cur : real
+    var check : int
+
+    %enemies
+    for e : 1 .. ENEMY_NUM
+	exit when enemies_on_standby <= 0
+	if enemy_on_standby (e) then
+	    %easier on eyes
+	    v := enemies (e) -> v
+
+	    %initialize min-finder
+	    shortest := 4294967296.0
+
+	    %check in the appropriate chunks
+	    for i : floor (max (1, (v.loc.x - range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
+		    floor (min (MAP_M_WID, (v.loc.x + range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1))
+		for j : floor (max (1, (v.loc.y - range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
+			floor (min (MAP_M_HEI, (v.loc.y + range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1))
+		    check := map_meta_sem (i) (j)
+		    for k : 1 .. MAP_M_CAP
+			exit when check <= 0
+			if map_meta (i) (j) (k) not= nil then
+			    if map_meta (i) (j) (k) -> class_type >= TURRET and map_meta (i) (j) (k) -> effective_health > 0 then
+				%triple the effective distance if a wall
+				cur := distance_squared (map_meta (i) (j) (k) -> loc, v.loc) *
+				    map_meta (i) (j) (k) -> class_type
+				if cur < shortest then
+				    u := map_meta (i) (j) (k)
+				    shortest := cur
+				end if
+			    end if
+			    check -= 1
+			end if
+		    end for
+		end for
+	    end for
+
+	    if shortest >= 4294967295.0 or distance_squared (u -> loc, v.loc) > range_enemies (v.e_type) ** 2 then
+		enemies (e) -> v.cur_target := nil
+	    else
+		enemies (e) -> v.cur_target := u
+	    end if
+
+	    enemy_on_standby (e) := false
+	    enemies_on_standby -= 1
+	end if
+    end for
+
+    %turrets
+    for t : 1 .. TURRET_NUM
+	exit when turrets_on_standby <= 0
+	if turret_on_standby (t) then
+	    %easier on eyes
+	    v := turrets (t) -> v
+
+	    %initialize min-finder
+	    shortest := 4294967296.0
+
+	    for i : floor (max (1, (v.loc.x - range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
+		    floor (min (MAP_M_WID, (v.loc.x + range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1))
+		for j : floor (max (1, (v.loc.y - range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
+			floor (min (MAP_M_HEI, (v.loc.y + range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1))
+		    check := map_meta_sem (i) (j)
+		    for k : 1 .. MAP_M_CAP
+			exit when check <= 0
+			if map_meta (i) (j) (k) not= nil then
+			    if map_meta (i) (j) (k) -> class_type = ENEMY and map_meta (i) (j) (k) -> effective_health > 0 then
+				cur := distance_squared (map_meta (i) (j) (k) -> loc, v.loc)
+				if cur < shortest then
+				    u := map_meta (i) (j) (k)
+				    shortest := cur
+				end if
+			    end if
+			    check -= 1
+			end if
+		    end for
+		end for
+	    end for
+
+	    if shortest >= 4294967295.0 or distance_squared (u -> loc, v.loc) > range_turrets (v.e_type) ** 2 then
+		turrets (t) -> v.cur_target := nil
+	    else
+		turrets (t) -> v.cur_target := u
+	    end if
+
+	    locate (2, 102)
+	    put v.cooldown
+	    locate (3, 102)
+	    if v.cur_target = nil then
+		put "nil"
+	    else
+		put v.cur_target -> ind
+		locate (4, 102)
+		put v_to_string (v.cur_target -> loc)
+		locate (5, 102)
+		put v.cur_target -> effective_health
+		locate (6, 102)
+		put v.cur_target -> health
+	    end if
+	    locate (1, 112)
+	    put num_projectiles : 10
+	    locate (7, 102)
+	    put shortest
+	    locate (8, 102)
+	    put range_turrets (v.e_type) ** 2
+	    locate (9, 102)
+	    put floor (max (1, (v.loc.x - range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1))
+	    locate (10, 102)
+	    put floor (min (MAP_M_WID, (v.loc.x + range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1))
+	    locate (11, 102)
+	    put floor (max (1, (v.loc.y - range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1))
+	    locate (12, 102)
+	    put floor (min (MAP_M_HEI, (v.loc.y + range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1))
+
+	    turret_on_standby (t) := false
+	    turrets_on_standby -= 1
+	end if
+    end for
+end resolve_targets

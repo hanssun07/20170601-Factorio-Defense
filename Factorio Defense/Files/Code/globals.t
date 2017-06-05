@@ -12,9 +12,9 @@ module Constants
     
     const FLOOR : int := -1
     const ENEMY : int := 0
-    const TURRET : int := 1
-    const WALL : int := 2
-    const FIRE : int := 3
+    const FIRE : int := 1
+    const TURRET : int := 2
+    const WALL : int := 6
 
     const ALIVE : int := 1
     const DEAD : int := 0
@@ -25,10 +25,10 @@ module Constants
     const ENEMY_T_NUM : int := 8
     const PROJ_NUM : int := 100
     const TURRET_NUM : int := 100
-    const ENEMY_NUM : int := 1000
+    const ENEMY_NUM : int := 100
     const PROJ_QUEUE_NUM : int := (TURRET_NUM + ENEMY_NUM) div 2
     
-    const ENEMY_MVT_TILES_PER_SEC : real := 0.3
+    const ENEMY_MVT_TILES_PER_SEC : real := 0.16
 
     const DAMAGE_TYPES : int := 4
     
@@ -41,7 +41,7 @@ module Constants
     const MAP_M_SIZ : int := 5                          %metamap block size
     const MAP_M_WID : int := MAP_WIDTH div MAP_M_SIZ    %width of metamap
     const MAP_M_HEI : int := MAP_HEIGHT div MAP_M_SIZ   %height of metamap
-    const MAP_M_CAP : int := MAP_M_SIZ * MAP_M_SIZ * 2  %cap of entities per block
+    const MAP_M_CAP : int := MAP_M_SIZ * MAP_M_SIZ * 5  %cap of entities per block
 end Constants
 
 module Global_Vars
