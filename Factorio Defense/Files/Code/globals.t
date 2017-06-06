@@ -42,6 +42,8 @@ module Constants
     const MAP_M_WID : int := MAP_WIDTH div MAP_M_SIZ    %width of metamap
     const MAP_M_HEI : int := MAP_HEIGHT div MAP_M_SIZ   %height of metamap
     const MAP_M_CAP : int := MAP_M_SIZ * MAP_M_SIZ * 5  %cap of entities per block
+
+    const INTFC_BEGIN : int := MAP_WIDTH * PIXELS_PER_GRID
 end Constants
 
 module Global_Vars
@@ -97,7 +99,54 @@ module Global_Vars
     var enemies_through : int := 0
 end Global_Vars
 
+module Sidebar
+    export var pervasive unqualified all
 
+    var prod_avail : int
+    var prod_per_tick : real
+    var ticks_to_next_prod : real
+    var ticks_per_prod : real
+    var prod_distribution_prod : real
 
+    %electricity (laser turrets, production)
+    var electricity_production : real
+    var electricity_consumption : real
+    var electricity_storage : real
+    var electricity_stored : real
+    var prod_until_next_e_storage : real
+    var prod_distribution_electricity : real
+    var prod_distribution_electricity_storage : real
 
+    %repair packs
+    var prod_until_next_repair : real
+    var prod_per_repair : real
+    var num_repair_available : int
+    var prod_distribution_repair : real
+    
+    %turrets and projectiles
+    var prod_until_next_turret : array 1 .. TURRET_T_NUM of real
+    var prod_until_next_proj : array 1 .. TURRET_T_NUM of real
+    var num_turrets_avail : array 1 .. TURRET_T_NUM of int
+    var num_proj_avail : array 1 .. TURRET_T_NUM of int
+    var prod_per_turret : array 1 .. TURRET_T_NUM of int
+    var prod_per_proj : array 1 .. TURRET_T_NUM of int
+    var turret_enabled : array 1 .. TURRET_T_NUM of boolean
+    var prod_distribution_turrets : array 1 .. TURRET_T_NUM of real
+    var prod_distribution_proj : array 1 .. TURRET_T_NUM of real
+
+    %research
+    const RESEARCH_NUM : int := 40
+    var research_enabled : array 1..RESEARCH_NUM of boolean
+    var prod_until_research_done : array 1..RESEARCH_NUM of real
+    var research_effect_type : array 1..RESEARCH_NUM of string
+    var research_effect : array 1..RESEARCH_NUM of string
+    var research_effect_type_2 : array 1..RESEARCH_NUM of string
+    var research_effect_2 : array 1..RESEARCH_NUM of string
+    var prod_distribution_research : array 1..RESEARCH_NUM of real
+    
+    %rockets
+    var prod_until_rocket : real
+    var rocket_enabled : boolean
+    var prod_distribution_rocket : real
+end Sidebar
 

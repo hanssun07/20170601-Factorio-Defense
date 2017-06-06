@@ -33,6 +33,7 @@ loop
     last_turret += 1
     num_turrets += 1
     var garbage : boolean
+    var t : int := 0
     for i : floor (max (1, (25.5 - 1.5) / MAP_M_SIZ + 1)) .. floor (min (MAP_M_WID, (25.5 - 0.5) / MAP_M_SIZ) + 1)
 	for j : floor (max (1, (3.5 - 1.5) / MAP_M_SIZ + 1)) .. floor (min (MAP_M_HEI, (3.5 - 0.5) / MAP_M_SIZ) + 1)
 	    garbage := lock_sem (i, j, addr (turrets (1) -> v))
@@ -40,10 +41,10 @@ loop
     end for
     for i : 25 .. 26
 	for j : 3 .. 4
-	    cheat(addressint, map(i)(j)) := addr(turrets(1)->v)
+	    cheat (addressint, map (i) (j)) := addr (turrets (1) -> v)
 	end for
     end for
-     reload_turrets(3) := 0
+    reload_turrets (3) := 0
 
     var tick : int
     loop
@@ -83,8 +84,8 @@ loop
 	%e -> draw
 	%e -> update (e -> v)
 
-	for i : 1 .. Rand.Int (1,1)
-	    spawn_enemy (Rand.Int(1,1)+Rand.Int(0,1)*4)
+	for i : 1 .. Rand.Int (1, 1)
+	    spawn_enemy (Rand.Int (1, 1) + Rand.Int (0, 1) * 4)
 	end for
 	if Rand.Real () <= 0.00 then
 	    for i : 1 .. MAP_WIDTH
@@ -103,8 +104,19 @@ loop
 	locate (1, 102)
 	put num_enemies : 5 ..
 
+	for i : 1 .. 0
+	    for j : 1 .. 10
+		locate(50-(j*5-3),i*10-5)
+		put map_meta_sem(i)(j)..
+	    end for
+	end for
+
 	View.Update
 	%exit when e -> v.state = NONEXISTENT
+	t := (t+1)mod 360
+	Draw.Line(810, 400-t, 810+Time.Elapsed - tick, 400-t, black)
+	Draw.Line(810, 400-(t+1)mod 360, 910, 400-(t+1)mod 360, white)
+	Draw.Dot(810+16, 400-(t+1)mod 360, brightred)
 	delay (16 - Time.Elapsed + tick)
     end loop
     % loop back to menu if play again
