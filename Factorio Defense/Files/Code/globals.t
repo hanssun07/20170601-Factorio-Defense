@@ -25,7 +25,7 @@ module Constants
     const ENEMY_T_NUM : int := 8
     const PROJ_NUM : int := 100
     const TURRET_NUM : int := 100
-    const ENEMY_NUM : int := 100
+    const ENEMY_NUM : int := 50
     const PROJ_QUEUE_NUM : int := (TURRET_NUM + ENEMY_NUM) div 2
     
     const ENEMY_MVT_TILES_PER_SEC : real := 0.16
@@ -138,10 +138,9 @@ module Sidebar
     const RESEARCH_NUM : int := 40
     var research_enabled : array 1..RESEARCH_NUM of boolean
     var prod_until_research_done : array 1..RESEARCH_NUM of real
-    var research_effect_type : array 1..RESEARCH_NUM of string
     var research_effect : array 1..RESEARCH_NUM of string
-    var research_effect_type_2 : array 1..RESEARCH_NUM of string
     var research_effect_2 : array 1..RESEARCH_NUM of string
+    var research_prereq : array 1..RESEARCH_NUM of array 1..RESEARCH_NUM of boolean
     var prod_distribution_research : array 1..RESEARCH_NUM of real
     
     %rockets
