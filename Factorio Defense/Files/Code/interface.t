@@ -139,6 +139,7 @@ module Interface
     end apply_research_effects
 
     body proc apply_effect (effect : string)
+	%work on this
 	assert false
     end apply_effect
 
