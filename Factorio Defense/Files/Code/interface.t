@@ -73,6 +73,21 @@ module Interface
 	end loop
 	prod_until_next_e_storage -= prod_distribution_electricity_storage * prod_avail
 
+  %update repair packs
+	prod_until_next_repair -= prod_per_tick * prod_distribution_repair
+	loop
+	    exit when prod_until_next_repair > 0
+	    prod_until_next_repair += prod_per_repair
+	    num_repair_available += 1
+	end loop
+
+	prod_until_next_wall -= prod_per_tick * num_wall_avail
+	loop
+	    exit when prod_until_next_wall > 0
+	    prod_until_next_wall += prod_per_wall
+	    num_wall_avail += 1
+	end loop
+  
 	%update rocket
 	prod_until_rocket -= prod_distribution_rocket * prod_avail
 
@@ -85,11 +100,13 @@ module Interface
 		num_turrets_avail (i) += 1
 		prod_until_next_turret (i) += prod_per_turret (i)
 	    end loop
-	    loop
-		exit when prod_until_next_proj (i) > 0
-		num_proj_avail (i) += 1
-		prod_until_next_proj (i) += prod_per_proj (i)
-	    end loop
+	    if prod_per_proj (i) > 0 then
+		loop
+		    exit when prod_until_next_proj (i) > 0
+		    num_proj_avail (i) += 1
+		    prod_until_next_proj (i) += prod_per_proj (i)
+		end loop
+	    end if
 	end for
 
 	%update research
@@ -139,10 +156,36 @@ module Interface
     end apply_research_effects
 
     body proc apply_effect (effect : string)
-	%work on this
-	assert false
+	if effect (1) = "-" then
+	    return
+	end if
+	var tmp, tmp2 : int
+	if effect (1..11) = "proj_damage" then
+	    tmp := index(effect, " ") + 1
+	    tmp2 := index(effect(tmp..*), " ") + 1
+	    proj_damage(strint(effect(tmp..tmp2-2))) := strint(effect(tmp2..*))
+	elsif effect (1..11) = "proj_sprite" then
+	    tmp := index(effect, " ") + 1
+	    tmp2 := index(effect(tmp..*), " ") + 1
+	    proj_sprite(strint(effect(tmp..tmp2-2))) := strint(effect(tmp2..*))
+	elsif effect (1..14) = "reload_turrets" then
+	    tmp := index(effect, " ") + 1
+	    tmp2 := index(effect(tmp..*), " ") + 1
+	    reload_turrets(strint(effect(tmp..tmp2-2))) := strint(effect(tmp2..*))
+	elsif effect (1..14) = "turret_enabled" then
+	    turret_enabled(strint(effect(index(effect, " ")..*))) := true
+	elsif effect (1..14) = "rocket_enabled" then
+	    rocket_enabled := true
+	end if
     end apply_effect
 
     proc draw_interface
+	Draw.FillBox(INTFC_BEGIN, 700, 1100, 800, 30)
+    
+	var str : string := frealstr(prod_per_tick * 60, 1, 1)
+	var spc : int := (15-length(str)) * NMRL_STR_WIDTH + PROD_STR_WIDTH
+	
+	Font.Draw("Production: ", INTFC_BEGIN + 30, 760, font, 18)
+	Font.Draw(str, INTFC_BEGIN + 30 + spc, 760, font, black)
     end draw_interface
 end Interface

@@ -1,0 +1,252 @@
+Bullet Damage 1
+60
+proj_damage 1 3
+-
+0 0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Bullet Damage 2
+120
+proj_damage 1 4
+-
+1 0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Bullet Damage 3
+180
+proj_damage 1 5
+-
+0 1 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Piercing Bullets
+300
+proj_damage 1 8
+proj_sprite 1 1
+0 0 1 0 0 0 0
+0 0 0 0 0 0
+0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Bullet Damage 4
+240
+proj_damage 1 10
+-
+0 0 0 1 0 0 0
+0 0 0 0 0 0
+0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Bullet Damage 5
+360
+proj_damage 1 12
+-
+0 0 0 0 1 0 0
+0 0 0 0 0 0
+0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Bullet Damage 6
+450
+proj_damage 1 15
+-
+0 0 0 0 0 1 0
+0 0 0 0 0 0
+0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Gun Turret Speed 1
+60
+reload_turrets 1 5
+-
+0 0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Gun Turret Speed 2
+120
+reload_turrets 1 4
+-
+0 0 0 0 0 0 0
+1 0 0 0 0 0
+0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Gun Turret Speed 3
+180
+reload_turrets 1 3
+-
+0 0 0 0 0 0 0
+0 1 0 0 0 0
+0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Gun Turret Speed 4
+240
+reload_turrets 1 2
+-
+0 0 0 0 0 0 0
+0 0 1 0 0 0
+0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Gun Turret Speed 5
+300
+reload_turrets 1 1
+-
+0 0 0 0 0 0 0
+0 0 0 1 0 0
+0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Gun Turret Speed 6
+360
+reload_turrets 1 0
+-
+0 0 0 0 0 0 0
+0 0 0 0 1 0
+0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Flamethrower Turret
+3000
+turret_enabled 2
+-
+0 0 0 1 0 0 0
+0 0 0 0 0 0
+0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Laser Turret
+12000
+turret_enabled 3
+-
+0 0 0 0 0 0 0
+0 0 0 0 0 0
+1 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Rocketry
+60000
+rocket_enabled
+-
+0 0 0 0 0 0 0
+0 0 0 0 0 0
+0 1 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Laser Turret Damage 1
+1200
+proj_damage 3 22
+-
+0 0 0 0 0 0 0
+0 0 0 0 0 0
+0 1 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Laser Turret Damage 2
+1800
+proj_damage 3 24
+-
+0 0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0
+1 0 0 0 0 0
+0 0 0 0 0 0
+Laser Turret Damage 3
+2400
+proj_damage 3 28
+-
+0 0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0
+0 1 0 0 0 0
+0 0 0 0 0 0
+Laser Turret Damage 4
+3600
+proj_damage 3 32
+-
+0 0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0
+0 0 1 0 0 0
+0 0 0 0 0 0
+Laser Turret Damage 5
+4800
+proj_damage 3 36
+-
+0 0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0
+0 0 0 1 0 0
+0 0 0 0 0 0
+Laser Turret Damage 6
+7200
+proj_damage 3 44
+-
+0 0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0
+0 0 0 0 1 0
+0 0 0 0 0 0
+Laser Turret Speed 1
+900
+reload_turrets 3 15
+-
+0 0 0 0 0 0 0
+0 0 0 0 0 0
+0 1 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+Laser Turret Speed 2
+1500
+reload_turrets 3 13
+-
+0 0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0
+0 0 0 0 0 0
+1 0 0 0 0 0
+Laser Turret Speed 3
+2100
+reload_turrets 3 11
+-
+0 0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0
+0 0 0 0 0 0
+0 1 0 0 0 0
+Laser Turret Speed 4
+2700
+reload_turrets 3 9
+-
+0 0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0
+0 0 0 0 0 0
+0 0 1 0 0 0
+Laser Turret Speed 5
+3300
+reload_turrets 3 7
+-
+0 0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0
+0 0 0 0 0 0
+0 0 0 1 0 0
+Laser Turret Speed 6
+3900
+reload_turrets 3 5
+-
+0 0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0
+0 0 0 0 0 0
+0 0 0 0 1 0

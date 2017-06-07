@@ -25,7 +25,7 @@ module Constants
     const ENEMY_T_NUM : int := 8
     const PROJ_NUM : int := 100
     const TURRET_NUM : int := 100
-    const ENEMY_NUM : int := 100
+    const ENEMY_NUM : int := 5
     const PROJ_QUEUE_NUM : int := (TURRET_NUM + ENEMY_NUM) div 2
     
     const ENEMY_MVT_TILES_PER_SEC : real := 0.16
@@ -42,8 +42,6 @@ module Constants
     const MAP_M_WID : int := MAP_WIDTH div MAP_M_SIZ    %width of metamap
     const MAP_M_HEI : int := MAP_HEIGHT div MAP_M_SIZ   %height of metamap
     const MAP_M_CAP : int := MAP_M_SIZ * MAP_M_SIZ * 5  %cap of entities per block
-
-    const INTFC_BEGIN : int := MAP_WIDTH * PIXELS_PER_GRID
 end Constants
 
 module Global_Vars
@@ -120,8 +118,14 @@ module Sidebar
     %repair packs
     var prod_until_next_repair : real
     var prod_per_repair : real
-    var num_repair_available : int
+    var num_repair_available : real
     var prod_distribution_repair : real
+    
+    %walls
+    var prod_until_next_wall : real
+    var prod_per_wall : real
+    var num_wall_avail : int
+    var prod_distribution_wall : real
     
     %turrets and projectiles
     var prod_until_next_turret : array 1 .. TURRET_T_NUM of real
@@ -135,18 +139,29 @@ module Sidebar
     var prod_distribution_proj : array 1 .. TURRET_T_NUM of real
 
     %research
-    const RESEARCH_NUM : int := 40
+    const RESEARCH_NUM : int := 28
+    var research_name : array 1..RESEARCH_NUM of string
     var research_enabled : array 1..RESEARCH_NUM of boolean
     var prod_until_research_done : array 1..RESEARCH_NUM of real
-    var research_effect_type : array 1..RESEARCH_NUM of string
     var research_effect : array 1..RESEARCH_NUM of string
-    var research_effect_type_2 : array 1..RESEARCH_NUM of string
     var research_effect_2 : array 1..RESEARCH_NUM of string
+    var research_prereq : array 1..RESEARCH_NUM of array 1..RESEARCH_NUM of boolean
     var prod_distribution_research : array 1..RESEARCH_NUM of real
     
     %rockets
     var prod_until_rocket : real
     var rocket_enabled : boolean
     var prod_distribution_rocket : real
+    
+    var font : int
+    
+    const INTFC_BEGIN : int := MAP_WIDTH * PIXELS_PER_GRID
+    const ACTUAL_BEGIN : int := INTFC_BEGIN + 10
+    const CONTROL_BEGIN : int := ACTUAL_BEGIN + 10
+    const COLORS : array 1..6 of int := init(59,64,67,71,75,79)
+    const NUM_COLORS : int := 6
+    
+    var PROD_STR_WIDTH : int
+    var NMRL_STR_WIDTH : int
 end Sidebar
 

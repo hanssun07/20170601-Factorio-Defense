@@ -110,6 +110,9 @@ loop
 		put map_meta_sem(i)(j)..
 	    end for
 	end for
+	
+	prod_per_tick *= 1.01
+	draw_interface
 
 	View.Update
 	%exit when e -> v.state = NONEXISTENT
@@ -117,7 +120,7 @@ loop
 	Draw.Line(810, 400-t, 810+Time.Elapsed - tick, 400-t, black)
 	Draw.Line(810, 400-(t+1)mod 360, 910, 400-(t+1)mod 360, white)
 	Draw.Dot(810+16, 400-(t+1)mod 360, brightred)
-	delay (16 - Time.Elapsed + tick)
+	%delay (16 - Time.Elapsed + tick)
     end loop
     % loop back to menu if play again
 end loop
