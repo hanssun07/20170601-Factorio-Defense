@@ -40,10 +40,15 @@ proc startup_init ()
 	proj_sprite (i) := 0
 	proj_dmg_type (i) := 0
     end for
+    
+    font := Font.New("serif:12")
+    PROD_STR_WIDTH := Font.Width("Production: ", font)
+    NMRL_STR_WIDTH := Font.Width("0", font)
 end startup_init
 
 proc read_data ()
     var f : int
+    var tmp : int
     open : f, "Files\\Data\\projectiles.txt", get
     for i : 1 .. PROJ_T_NUM
 	exit when eof (f)
@@ -59,7 +64,10 @@ proc read_data ()
 	get : f, reload_turrets (i)
 	get : f, range_turrets (i)
 	get : f, proj_turrets (i)
-	get : f, cost_turrets (i)
+	get : f, prod_per_turret (i)
+	prod_until_next_turret(i) := prod_per_turret(i)
+	get : f, prod_per_proj(i)
+	prod_until_next_proj(i) := prod_per_proj(i)
 	for j : 1 .. DAMAGE_TYPES
 	    get : f, armor_turrets (i) (j)
 	end for
@@ -78,6 +86,24 @@ proc read_data ()
 	end for
     end for
     close : f
+    open : f, "Files\\Data\\research.txt", get
+    for i : 1..RESEARCH_NUM
+	exit when eof(f)
+	get : f, skip, research_name(i) : *
+	get : f, skip, prod_until_research_done(i)
+	get : f, skip, research_effect(i) : *
+	get : f, skip, research_effect_2(i) : *
+	put research_effect(i)
+	put research_effect_2(i)
+	for j : 1..RESEARCH_NUM
+	    get : f, skip, tmp
+	    if tmp = 1 then
+		research_prereq(i)(j) := true
+	    else
+		research_prereq(i)(j) := false
+	    end if
+	end for
+    end for
 end read_data
 
 proc begin_init ()
@@ -125,6 +151,50 @@ proc begin_init ()
     can_fire := true
     enemies_through := 0
     chunks_avail_for_spawn := MAP_M_WID + MAP_M_HEI * 2 - 2
+    
+    prod_avail := 0
+    prod_per_tick := 1/60
+    ticks_to_next_prod := 60
+    ticks_per_prod := 60
+    prod_distribution_prod := 1
+    
+    electricity_production := 0
+    electricity_consumption := 0
+    electricity_storage := 0.001
+    electricity_stored := 0
+    prod_until_next_e_storage := 1000.0
+    prod_distribution_electricity := 0.0
+    prod_distribution_electricity_storage := 0.0
+    
+    prod_until_next_repair := 10.0
+    prod_per_repair := 10.0
+    num_repair_available := 1.0
+    prod_distribution_repair := 0.0
+    
+    prod_until_next_wall := 240.0
+    prod_per_wall := 240.0
+    num_wall_avail := 20
+    prod_distribution_wall := 0.0
+    
+    prod_until_rocket := 1000000.0  %one million
+    rocket_enabled := false
+    prod_distribution_rocket := 0.0
+    
+    for i : 1..TURRET_T_NUM
+	num_turrets_avail(i) := 0
+	num_proj_avail(i) := 0
+	turret_enabled(i) := false
+	prod_distribution_turrets(i) := 0.0
+	prod_distribution_proj(i) := 0.0
+    end for
+    
+    num_turrets_avail(1) := 1
+    num_proj_avail(1) := 100
+    
+    for i : 1..RESEARCH_NUM
+	research_enabled(i) := false
+	prod_distribution_research(i) := 0.0
+    end for
 end begin_init
 
 proc resolve_projectiles ()

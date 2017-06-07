@@ -110,6 +110,9 @@ loop
 		put map_meta_sem(i)(j)..
 	    end for
 	end for
+	
+	prod_per_tick *= 1.01
+	draw_interface
 
 	View.Update
 	%exit when e -> v.state = NONEXISTENT
