@@ -73,7 +73,7 @@ module Interface
 	end loop
 	prod_until_next_e_storage -= prod_distribution_electricity_storage * prod_avail
 
-	%update repair packs
+  %update repair packs
 	prod_until_next_repair -= prod_per_tick * prod_distribution_repair
 	loop
 	    exit when prod_until_next_repair > 0
@@ -87,7 +87,7 @@ module Interface
 	    prod_until_next_wall += prod_per_wall
 	    num_wall_avail += 1
 	end loop
-
+  
 	%update rocket
 	prod_until_rocket -= prod_distribution_rocket * prod_avail
 
