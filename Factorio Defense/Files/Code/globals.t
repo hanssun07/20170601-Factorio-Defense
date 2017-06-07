@@ -25,7 +25,7 @@ module Constants
     const ENEMY_T_NUM : int := 8
     const PROJ_NUM : int := 100
     const TURRET_NUM : int := 100
-    const ENEMY_NUM : int := 5
+    const ENEMY_NUM : int := 50
     const PROJ_QUEUE_NUM : int := (TURRET_NUM + ENEMY_NUM) div 2
     
     const ENEMY_MVT_TILES_PER_SEC : real := 0.16
@@ -155,13 +155,16 @@ module Sidebar
     
     var font : int
     
-    const INTFC_BEGIN : int := MAP_WIDTH * PIXELS_PER_GRID
+    const INTFC_BEGIN : int := MAP_WIDTH * PIXELS_PER_GRID+1
     const ACTUAL_BEGIN : int := INTFC_BEGIN + 10
-    const CONTROL_BEGIN : int := ACTUAL_BEGIN + 10
+    const CONTROL_BEGIN : int := ACTUAL_BEGIN + 20
     const COLORS : array 1..6 of int := init(59,64,67,71,75,79)
     const NUM_COLORS : int := 6
+    const ALLOC_BEGIN : int := 720
+    const ALLOC_HEIGHT : int := ALLOC_BEGIN-20
     
     var PROD_STR_WIDTH : int
     var NMRL_STR_WIDTH : int
+    
 end Sidebar
 
