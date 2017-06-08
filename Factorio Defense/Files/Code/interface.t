@@ -40,21 +40,26 @@ module Interface
     proc int_tick ()
 	fix_int
 
+	var t : real
+
 	prod_avail := 0
 	ticks_to_next_prod -= 1
 	loop
 	    exit when ticks_to_next_prod > 0
 
 	    if electricity_stored <= 0 then
-		ticks_to_next_prod += ticks_per_prod
+		t := ticks_per_prod
 	    else
-		ticks_to_next_prod += max (1, ticks_per_prod)
+		t := max (1, ticks_per_prod)
 	    end if
-	    prod_avail += 1
+
+	    t := floor (max (-ticks_to_next_prod / t, 1))
+	    ticks_to_next_prod += t * ticks_per_prod
+	    prod_avail += floor (t)
 	end loop
 
 	%update production
-	prod_per_tick += prod_distribution_prod * prod_avail / 600.0
+	prod_per_tick += sqrt (prod_distribution_prod * prod_avail) / 600.0
 	ticks_per_prod := 1.0 / prod_per_tick
 
 	%update electricity
@@ -73,7 +78,7 @@ module Interface
 	end loop
 	prod_until_next_e_storage -= prod_distribution_electricity_storage * prod_avail
 
-  %update repair packs
+	%update repair packs
 	prod_until_next_repair -= prod_per_tick * prod_distribution_repair
 	loop
 	    exit when prod_until_next_repair > 0
@@ -81,13 +86,13 @@ module Interface
 	    num_repair_available += 1
 	end loop
 
-	prod_until_next_wall -= prod_per_tick * num_wall_avail
+	prod_until_next_wall -= prod_per_tick * prod_distribution_wall
 	loop
 	    exit when prod_until_next_wall > 0
 	    prod_until_next_wall += prod_per_wall
 	    num_wall_avail += 1
 	end loop
-  
+
 	%update rocket
 	prod_until_rocket -= prod_distribution_rocket * prod_avail
 
@@ -134,7 +139,7 @@ module Interface
 	for i : 1 .. RESEARCH_NUM
 	    prereqs := false
 	    %only check if research in question isn't done
-	    if prod_until_research_done (i) <= 0 then
+	    if prod_until_research_done (i) > 0 then
 		prereqs := true
 		%check the prereqs and mark false if one isn't met
 		for j : 1 .. RESEARCH_NUM
@@ -160,32 +165,91 @@ module Interface
 	    return
 	end if
 	var tmp, tmp2 : int
-	if effect (1..11) = "proj_damage" then
-	    tmp := index(effect, " ") + 1
-	    tmp2 := index(effect(tmp..*), " ") + 1
-	    proj_damage(strint(effect(tmp..tmp2-2))) := strint(effect(tmp2..*))
-	elsif effect (1..11) = "proj_sprite" then
-	    tmp := index(effect, " ") + 1
-	    tmp2 := index(effect(tmp..*), " ") + 1
-	    proj_sprite(strint(effect(tmp..tmp2-2))) := strint(effect(tmp2..*))
-	elsif effect (1..14) = "reload_turrets" then
-	    tmp := index(effect, " ") + 1
-	    tmp2 := index(effect(tmp..*), " ") + 1
-	    reload_turrets(strint(effect(tmp..tmp2-2))) := strint(effect(tmp2..*))
-	elsif effect (1..14) = "turret_enabled" then
-	    turret_enabled(strint(effect(index(effect, " ")..*))) := true
-	elsif effect (1..14) = "rocket_enabled" then
+	if effect (1 .. 11) = "proj_damage" then
+	    tmp := index (effect, " ") + 1
+	    tmp2 := index (effect (tmp .. *), " ") + 1
+	    proj_damage (strint (effect (tmp .. tmp2 - 2))) := strint (effect (tmp2 .. *))
+	elsif effect (1 .. 11) = "proj_sprite" then
+	    tmp := index (effect, " ") + 1
+	    tmp2 := index (effect (tmp .. *), " ") + 1
+	    proj_sprite (strint (effect (tmp .. tmp2 - 2))) := strint (effect (tmp2 .. *))
+	elsif effect (1 .. 14) = "reload_turrets" then
+	    tmp := index (effect, " ") + 1
+	    tmp2 := index (effect (tmp .. *), " ") + 1
+	    reload_turrets (strint (effect (tmp .. tmp2 - 2))) := strint (effect (tmp2 .. *))
+	elsif effect (1 .. 14) = "turret_enabled" then
+	    turret_enabled (strint (effect (index (effect, " ") .. *))) := true
+	elsif effect (1 .. 14) = "rocket_enabled" then
 	    rocket_enabled := true
 	end if
     end apply_effect
 
-    proc draw_interface
-	Draw.FillBox(INTFC_BEGIN, 700, 1100, 800, 30)
+    proc draw_part_of_bar(used_part : real, x, tot_h : int, var agg : real, var parts_passed : int)
+	var cur_y := ALLOC_BEGIN - floor(agg * tot_h + 10*parts_passed)
+	agg += used_part
+	parts_passed += 1
+	var next_y := ALLOC_BEGIN - floor(agg * tot_h + 10*parts_passed)
+	Draw.FillBox(x, cur_y, x + 10, next_y, COLORS((parts_passed -1)mod NUM_COLORS+1))
+    end draw_part_of_bar
     
-	var str : string := frealstr(prod_per_tick * 60, 1, 1)
-	var spc : int := (15-length(str)) * NMRL_STR_WIDTH + PROD_STR_WIDTH
+    proc draw_interface
+	Draw.FillBox (INTFC_BEGIN, 00, 1100, 800, 30)
+
+	var str : string := frealstr (prod_per_tick * 60, 1, 1)
+	var spc : int := (15 - length (str)) * NMRL_STR_WIDTH + PROD_STR_WIDTH
+	var alloc_agg : real := 0
+	var cur_y : int := ALLOC_BEGIN
+	var next_y : int
+	var num_parts : int := 5
+	var tot_h : int
+
+	Font.Draw ("Production: ", INTFC_BEGIN + 30, 760, font, 18)
+	Font.Draw (str, INTFC_BEGIN + 30 + spc, 760, font, black)
+
+	str := frealstr (electricity_stored, 1, 1)
+	spc := (15 - length (str)) * NMRL_STR_WIDTH + PROD_STR_WIDTH
+	Font.Draw ("Electricity Stored: ", INTFC_BEGIN + 30, 740, font, 18)
+	Font.Draw (str, INTFC_BEGIN + 30 + spc, 740, font, black)
+
+	for i : 1 .. TURRET_T_NUM
+	    if turret_enabled (i) then
+		num_parts += 1
+		if prod_per_proj (i) > 0 then
+		    num_parts += 1
+		end if
+	    end if
+	end for
+	for i : 1 .. RESEARCH_NUM
+	    if research_enabled (i) then
+		num_parts += 1
+	    end if
+	end for
+	if rocket_enabled then
+	    num_parts += 1
+	end if
 	
-	Font.Draw("Production: ", INTFC_BEGIN + 30, 760, font, 18)
-	Font.Draw(str, INTFC_BEGIN + 30 + spc, 760, font, black)
+	var parts_passed := 0
+	tot_h := ALLOC_HEIGHT - 10*num_parts
+	
+	draw_part_of_bar(prod_distribution_prod, ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed)
+	draw_part_of_bar(prod_distribution_electricity, ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed)
+	draw_part_of_bar(prod_distribution_electricity_storage, ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed)
+	draw_part_of_bar(prod_distribution_repair, ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed)
+	draw_part_of_bar(prod_distribution_wall, ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed)
+
+	for i : 1 .. TURRET_T_NUM
+	    if (turret_enabled(i)) then
+		draw_part_of_bar(prod_distribution_turrets(i), ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed)
+		if prod_per_proj(i) > 0 then
+		    draw_part_of_bar(prod_distribution_proj(i), ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed)
+		end if
+	    end if
+	end for
+	for i : 1 .. RESEARCH_NUM
+	    if (research_enabled(i)) then
+		draw_part_of_bar(prod_distribution_research(i), ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed)
+	    end if
+	end for
+	Draw.Box(ACTUAL_BEGIN -1, ALLOC_BEGIN+1,ACTUAL_BEGIN + 11, ALLOC_BEGIN - ALLOC_HEIGHT -1, 23)
     end draw_interface
 end Interface

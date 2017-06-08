@@ -42,7 +42,7 @@ proc startup_init ()
     end for
     
     font := Font.New("serif:12")
-    PROD_STR_WIDTH := Font.Width("Production: ", font)
+    PROD_STR_WIDTH := max(Font.Width("Production: ", font), Font.Width("Electricity Stored: ", font))
     NMRL_STR_WIDTH := Font.Width("0", font)
 end startup_init
 
@@ -190,11 +190,14 @@ proc begin_init ()
     
     num_turrets_avail(1) := 1
     num_proj_avail(1) := 100
+    turret_enabled(1) := true
     
     for i : 1..RESEARCH_NUM
 	research_enabled(i) := false
 	prod_distribution_research(i) := 0.0
     end for
+    
+    check_research_prereqs()
 end begin_init
 
 proc resolve_projectiles ()

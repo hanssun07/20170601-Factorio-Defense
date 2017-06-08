@@ -111,7 +111,8 @@ loop
 	    end for
 	end for
 	
-	prod_per_tick *= 1.01
+	%prod_per_tick *= 1.01
+	int_tick
 	draw_interface
 
 	View.Update
