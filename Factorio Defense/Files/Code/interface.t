@@ -35,6 +35,34 @@ module Interface
 	for i : 1 .. RESEARCH_NUM
 	    prod_distribution_research (i) *= dist_mult
 	end for
+
+	tot_dist := 0
+	tot_dist += prod_distribution_prod_user
+	tot_dist += prod_distribution_electricity_user
+	tot_dist += prod_distribution_electricity_storage_user
+	tot_dist += prod_distribution_repair_user
+	tot_dist += prod_distribution_rocket_user
+	for i : 1 .. TURRET_T_NUM
+	    tot_dist += prod_distribution_turrets_user (i)
+	    tot_dist += prod_distribution_proj_user (i)
+	end for
+	for i : 1 .. RESEARCH_NUM
+	    tot_dist += prod_distribution_research_user (i)
+	end for
+
+	dist_mult := 1.0 / tot_dist
+	prod_distribution_prod_user *= dist_mult
+	prod_distribution_electricity_user *= dist_mult
+	prod_distribution_electricity_storage_user *= dist_mult
+	prod_distribution_repair_user *= dist_mult
+	prod_distribution_rocket_user *= dist_mult
+	for i : 1 .. TURRET_T_NUM
+	    prod_distribution_turrets_user (i) *= dist_mult
+	    prod_distribution_proj_user (i) *= dist_mult
+	end for
+	for i : 1 .. RESEARCH_NUM
+	    prod_distribution_research_user (i) *= dist_mult
+	end for
     end fix_int
 
     proc int_tick ()
@@ -47,7 +75,7 @@ module Interface
 	loop
 	    exit when ticks_to_next_prod > 0
 
-	    if electricity_stored <= 0 then
+	    if electricity_stored > 0 then
 		t := ticks_per_prod
 	    else
 		t := max (1, ticks_per_prod)
@@ -59,11 +87,11 @@ module Interface
 	end loop
 
 	%update production
-	prod_per_tick += sqrt (prod_distribution_prod * prod_avail) / 600.0
+	prod_per_tick += sqrt (prod_per_tick) / prod_per_tick * prod_distribution_prod * prod_avail / 600.0
 	ticks_per_prod := 1.0 / prod_per_tick
 
 	%update electricity
-	electricity_consumption := prod_per_tick / 60.0
+	electricity_consumption := prod_per_tick / 6.0
 	electricity_stored += electricity_production - electricity_consumption
 	if electricity_stored < 0 then
 	    electricity_stored := 0
@@ -184,14 +212,44 @@ module Interface
 	end if
     end apply_effect
 
-    proc draw_part_of_bar(used_part : real, x, tot_h : int, var agg : real, var parts_passed : int)
-	var cur_y := ALLOC_BEGIN - floor(agg * tot_h + 10*parts_passed)
+    proc draw_part_of_bar (used_part : real, x, tot_h : int, var agg : real, var parts_passed, cur_y : int)
+	cur_y := ALLOC_BEGIN - floor (agg * tot_h + 10 * parts_passed)
 	agg += used_part
 	parts_passed += 1
-	var next_y := ALLOC_BEGIN - floor(agg * tot_h + 10*parts_passed)
-	Draw.FillBox(x, cur_y, x + 10, next_y, COLORS((parts_passed -1)mod NUM_COLORS+1))
+	var next_y := ALLOC_BEGIN - floor (agg * tot_h + 10 * parts_passed)
+	Draw.FillBox (x, cur_y, x + 10, next_y, COLORS ((parts_passed - 1) mod NUM_COLORS + 1))
     end draw_part_of_bar
-    
+
+    proc update_item_list
+	cheat (addressint, prod_dist_ys (1)) := addr (prod_distribution_prod_y)
+	cheat (addressint, prod_dist_ys (2)) := addr (prod_distribution_electricity_y)
+	cheat (addressint, prod_dist_ys (3)) := addr (prod_distribution_electricity_storage_y)
+	cheat (addressint, prod_dist_ys (4)) := addr (prod_distribution_repair_y)
+	cheat (addressint, prod_dist_ys (5)) := addr (prod_distribution_wall_y)
+	var j : int := 6
+	for i : 1 .. TURRET_T_NUM
+	    if (turret_enabled (i)) then
+		cheat (addressint, prod_dist_ys (j)) := addr (prod_distribution_turrets_y (i))
+		j += 1
+		if prod_per_proj (i) > 0 then
+		    cheat (addressint, prod_dist_ys (j)) := addr (prod_distribution_proj_y (i))
+		    j += 1
+		end if
+	    end if
+	end for
+	for i : 1 .. RESEARCH_NUM
+	    if (research_enabled (i)) then
+		cheat (addressint, prod_dist_ys (j)) := addr (prod_distribution_research_y (i))
+		j += 1
+	    end if
+	end for
+	if rocket_enabled then
+	    cheat (addressint, prod_dist_ys (j)) := addr (prod_distribution_rocket)
+	    j += 1
+	end if
+	prod_dist_ys_count := j - 1
+    end update_item_list
+
     proc draw_interface
 	Draw.FillBox (INTFC_BEGIN, 00, 1100, 800, 30)
 
@@ -202,6 +260,7 @@ module Interface
 	var next_y : int
 	var num_parts : int := 5
 	var tot_h : int
+	var dmmy : int
 
 	Font.Draw ("Production: ", INTFC_BEGIN + 30, 760, font, 18)
 	Font.Draw (str, INTFC_BEGIN + 30 + spc, 760, font, black)
@@ -227,29 +286,106 @@ module Interface
 	if rocket_enabled then
 	    num_parts += 1
 	end if
-	
+
 	var parts_passed := 0
-	tot_h := ALLOC_HEIGHT - 10*num_parts
-	
-	draw_part_of_bar(prod_distribution_prod, ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed)
-	draw_part_of_bar(prod_distribution_electricity, ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed)
-	draw_part_of_bar(prod_distribution_electricity_storage, ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed)
-	draw_part_of_bar(prod_distribution_repair, ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed)
-	draw_part_of_bar(prod_distribution_wall, ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed)
+	tot_h := ALLOC_HEIGHT - 10 * num_parts
+
+	draw_part_of_bar (prod_distribution_prod, ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed, dmmy)
+	draw_part_of_bar (prod_distribution_electricity, ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed, dmmy)
+	draw_part_of_bar (prod_distribution_electricity_storage, ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed, dmmy)
+	draw_part_of_bar (prod_distribution_repair, ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed, dmmy)
+	draw_part_of_bar (prod_distribution_wall, ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed, dmmy)
 
 	for i : 1 .. TURRET_T_NUM
-	    if (turret_enabled(i)) then
-		draw_part_of_bar(prod_distribution_turrets(i), ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed)
-		if prod_per_proj(i) > 0 then
-		    draw_part_of_bar(prod_distribution_proj(i), ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed)
+	    if (turret_enabled (i)) then
+		draw_part_of_bar (prod_distribution_turrets (i), ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed, dmmy)
+		if prod_per_proj (i) > 0 then
+		    draw_part_of_bar (prod_distribution_proj (i), ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed, dmmy)
 		end if
 	    end if
 	end for
 	for i : 1 .. RESEARCH_NUM
-	    if (research_enabled(i)) then
-		draw_part_of_bar(prod_distribution_research(i), ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed)
+	    if (research_enabled (i)) then
+		draw_part_of_bar (prod_distribution_research (i), ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed, dmmy)
 	    end if
 	end for
-	Draw.Box(ACTUAL_BEGIN -1, ALLOC_BEGIN+1,ACTUAL_BEGIN + 11, ALLOC_BEGIN - ALLOC_HEIGHT -1, 23)
+	if rocket_enabled then
+	    draw_part_of_bar (prod_distribution_rocket, ACTUAL_BEGIN + 20, tot_h, alloc_agg, parts_passed, dmmy)
+	end if
+	Draw.Box (ACTUAL_BEGIN - 1, ALLOC_BEGIN + 1, ACTUAL_BEGIN + 11, ALLOC_BEGIN - ALLOC_HEIGHT - 1, 23)
+
+	parts_passed := 0
+	alloc_agg := 0.0
+
+	draw_part_of_bar (prod_distribution_prod_user, ACTUAL_BEGIN + 20, tot_h, alloc_agg, parts_passed, prod_distribution_prod_y)
+	draw_part_of_bar (prod_distribution_electricity_user, ACTUAL_BEGIN + 20, tot_h, alloc_agg, parts_passed, prod_distribution_electricity_y)
+	draw_part_of_bar (prod_distribution_electricity_storage_user, ACTUAL_BEGIN + 20, tot_h, alloc_agg, parts_passed, prod_distribution_electricity_storage_y)
+	draw_part_of_bar (prod_distribution_repair_user, ACTUAL_BEGIN + 20, tot_h, alloc_agg, parts_passed, prod_distribution_repair_y)
+	draw_part_of_bar (prod_distribution_wall_user, ACTUAL_BEGIN + 20, tot_h, alloc_agg, parts_passed, prod_distribution_wall_y)
+
+	for i : 1 .. TURRET_T_NUM
+	    if (turret_enabled (i)) then
+		draw_part_of_bar (prod_distribution_turrets_user (i), ACTUAL_BEGIN + 20, tot_h, alloc_agg, parts_passed, prod_distribution_turrets_y (i))
+		if prod_per_proj (i) > 0 then
+		    draw_part_of_bar (prod_distribution_proj_user (i), ACTUAL_BEGIN + 20, tot_h, alloc_agg, parts_passed, prod_distribution_proj_y (i))
+		end if
+	    end if
+	end for
+	for i : 1 .. RESEARCH_NUM
+	    if (research_enabled (i)) then
+		draw_part_of_bar (prod_distribution_research_user (i), ACTUAL_BEGIN + 20, tot_h, alloc_agg, parts_passed, prod_distribution_research_y (i))
+	    end if
+	end for
+	if rocket_enabled then
+	    draw_part_of_bar (prod_distribution_rocket_user, ACTUAL_BEGIN + 20, tot_h, alloc_agg, parts_passed, prod_distribution_rocket_y)
+	end if
+	Draw.Box (ACTUAL_BEGIN + 19, ALLOC_BEGIN + 1, ACTUAL_BEGIN + 31, ALLOC_BEGIN - ALLOC_HEIGHT - 1, 23)
+
+	update_item_list
+	var moved : boolean := false
+	var db : int := min (50, floor (ALLOC_HEIGHT / num_parts))
+	loop
+	    for i : 1 .. num_parts-1
+		if ^ (prod_dist_ys (i)) - db < ^ (prod_dist_ys (i + 1)) then
+		    ^ (prod_dist_ys (i + 1)) := ^ (prod_dist_ys (i)) - db
+		    moved := true
+		end if
+	    end for
+	    for decreasing i : num_parts .. 2
+		if ^ (prod_dist_ys (i)) + db > ^ (prod_dist_ys (i - 1)) then
+		    ^ (prod_dist_ys (i - 1)) := ^ (prod_dist_ys (i)) + db
+		    moved := true
+		end if
+	    end for
+	    exit when moved = false
+	    moved := false
+	end loop
+	
+	var cur_x : int := INTFC_BEGIN + 50
+
+	parts_passed := 0
+	Draw.FillBox (cur_x, prod_distribution_prod_y, cur_x + 50, prod_distribution_prod_y - 50, COLORS (parts_passed mod NUM_COLORS + 1))
+	Font.Draw ("Production Infrastructure", cur_x + 60, prod_distribution_prod_y - 12, font, 18)
+	str := frealstr (prod_per_tick / sqrt (prod_per_tick) * prod_per_tick * prod_distribution_prod , 1, 1)
+	spc := (8 - length (str)) * NMRL_STR_WIDTH
+	Font.Draw ("+", cur_x + 60, prod_distribution_prod_y - 32, font, black)
+	Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_prod_y - 32, font, black)
+
+	parts_passed += 1
+	Draw.FillBox (cur_x, prod_distribution_electricity_y, cur_x + 50, prod_distribution_electricity_y - 50, COLORS (parts_passed mod NUM_COLORS + 1))
+	Font.Draw ("Electric Generation Infrastructure", cur_x + 60, prod_distribution_electricity_y - 12, font, 18)
+	str := frealstr (electricity_production, 1, 1)
+	spc := (8 - length (str)) * NMRL_STR_WIDTH
+	Font.Draw ("+", cur_x + 60, prod_distribution_electricity_y - 32, font, black)
+	Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_electricity_y - 32, font, black)
+	str := frealstr (electricity_consumption, 1, 1)
+	spc := (8 - length (str)) * NMRL_STR_WIDTH
+	if electricity_consumption > electricity_production then
+	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_electricity_y - 47, font, brightred)
+	    Font.Draw ("-", cur_x + 60, prod_distribution_electricity_y - 47, font, brightred)
+	else
+	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_electricity_y - 47, font, black)
+	    Font.Draw ("-", cur_x + 60, prod_distribution_electricity_y - 47, font, black)
+	end if
     end draw_interface
 end Interface

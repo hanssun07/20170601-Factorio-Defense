@@ -153,10 +153,11 @@ proc begin_init ()
     chunks_avail_for_spawn := MAP_M_WID + MAP_M_HEI * 2 - 2
     
     prod_avail := 0
-    prod_per_tick := 1/60
-    ticks_to_next_prod := 60
-    ticks_per_prod := 60
+    prod_per_tick := 10/60
+    ticks_to_next_prod := 6
+    ticks_per_prod := 6
     prod_distribution_prod := 1
+    prod_distribution_prod_user := 1
     
     electricity_production := 0
     electricity_consumption := 0
@@ -164,28 +165,35 @@ proc begin_init ()
     electricity_stored := 0
     prod_until_next_e_storage := 1000.0
     prod_distribution_electricity := 0.0
+    prod_distribution_electricity_user := 0.0
     prod_distribution_electricity_storage := 0.0
+    prod_distribution_electricity_storage_user := 0.0
     
     prod_until_next_repair := 10.0
     prod_per_repair := 10.0
     num_repair_available := 1.0
     prod_distribution_repair := 0.0
+    prod_distribution_repair_user := 0.0
     
     prod_until_next_wall := 240.0
     prod_per_wall := 240.0
     num_wall_avail := 20
     prod_distribution_wall := 0.0
+    prod_distribution_wall_user := 0.0
     
     prod_until_rocket := 1000000.0  %one million
     rocket_enabled := false
     prod_distribution_rocket := 0.0
+    prod_distribution_rocket_user := 0.0
     
     for i : 1..TURRET_T_NUM
 	num_turrets_avail(i) := 0
 	num_proj_avail(i) := 0
 	turret_enabled(i) := false
 	prod_distribution_turrets(i) := 0.0
+	prod_distribution_turrets_user(i) := 0.0
 	prod_distribution_proj(i) := 0.0
+	prod_distribution_proj_user(i) := 0.0
     end for
     
     num_turrets_avail(1) := 1
@@ -195,6 +203,7 @@ proc begin_init ()
     for i : 1..RESEARCH_NUM
 	research_enabled(i) := false
 	prod_distribution_research(i) := 0.0
+	prod_distribution_research_user(i) := 0.0
     end for
     
     check_research_prereqs()

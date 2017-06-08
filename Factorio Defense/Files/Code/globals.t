@@ -25,7 +25,7 @@ module Constants
     const ENEMY_T_NUM : int := 8
     const PROJ_NUM : int := 100
     const TURRET_NUM : int := 100
-    const ENEMY_NUM : int := 50
+    const ENEMY_NUM : int := 5
     const PROJ_QUEUE_NUM : int := (TURRET_NUM + ENEMY_NUM) div 2
     
     const ENEMY_MVT_TILES_PER_SEC : real := 0.16
@@ -105,6 +105,8 @@ module Sidebar
     var ticks_to_next_prod : real
     var ticks_per_prod : real
     var prod_distribution_prod : real
+    var prod_distribution_prod_user : real
+    var prod_distribution_prod_y : int
 
     %electricity (laser turrets, production)
     var electricity_production : real
@@ -113,19 +115,27 @@ module Sidebar
     var electricity_stored : real
     var prod_until_next_e_storage : real
     var prod_distribution_electricity : real
+    var prod_distribution_electricity_user : real
+    var prod_distribution_electricity_y : int
     var prod_distribution_electricity_storage : real
+    var prod_distribution_electricity_storage_user : real
+    var prod_distribution_electricity_storage_y : int
 
     %repair packs
     var prod_until_next_repair : real
     var prod_per_repair : real
     var num_repair_available : real
     var prod_distribution_repair : real
+    var prod_distribution_repair_user : real
+    var prod_distribution_repair_y : int
     
     %walls
     var prod_until_next_wall : real
     var prod_per_wall : real
     var num_wall_avail : int
     var prod_distribution_wall : real
+    var prod_distribution_wall_user : real
+    var prod_distribution_wall_y : int
     
     %turrets and projectiles
     var prod_until_next_turret : array 1 .. TURRET_T_NUM of real
@@ -136,7 +146,11 @@ module Sidebar
     var prod_per_proj : array 1 .. TURRET_T_NUM of int
     var turret_enabled : array 1 .. TURRET_T_NUM of boolean
     var prod_distribution_turrets : array 1 .. TURRET_T_NUM of real
+    var prod_distribution_turrets_user : array 1 .. TURRET_T_NUM of real
+    var prod_distribution_turrets_y : array 1 .. TURRET_T_NUM of int
     var prod_distribution_proj : array 1 .. TURRET_T_NUM of real
+    var prod_distribution_proj_user : array 1 .. TURRET_T_NUM of real
+    var prod_distribution_proj_y : array 1 .. TURRET_T_NUM of int
 
     %research
     const RESEARCH_NUM : int := 28
@@ -147,11 +161,18 @@ module Sidebar
     var research_effect_2 : array 1..RESEARCH_NUM of string
     var research_prereq : array 1..RESEARCH_NUM of array 1..RESEARCH_NUM of boolean
     var prod_distribution_research : array 1..RESEARCH_NUM of real
+    var prod_distribution_research_user : array 1..RESEARCH_NUM of real
+    var prod_distribution_research_y : array 1..RESEARCH_NUM of int
     
     %rockets
     var prod_until_rocket : real
     var rocket_enabled : boolean
     var prod_distribution_rocket : real
+    var prod_distribution_rocket_user : real
+    var prod_distribution_rocket_y : int
+    
+    var prod_dist_ys_count : int
+    var prod_dist_ys : array 1..50 of unchecked ^int
     
     var font : int
     
