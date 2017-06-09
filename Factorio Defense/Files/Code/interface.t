@@ -74,16 +74,14 @@ module Interface
 	ticks_to_next_prod -= 1
 	loop
 	    exit when ticks_to_next_prod > 0
-
-	    if electricity_stored > 0 then
-		t := ticks_per_prod
-	    else
-		t := max (1, ticks_per_prod)
-	    end if
-
-	    t := floor (max (-ticks_to_next_prod / t, 1))
+	    
+	    t := floor (max (-ticks_to_next_prod / ticks_per_prod, 1))
 	    ticks_to_next_prod += t * ticks_per_prod
-	    prod_avail += floor (t)
+	    if electricity_stored > 0 then
+		prod_avail += floor (t)
+	    else
+		prod_avail += min(floor (t),1)
+	    end if
 	end loop
 
 	%update production
@@ -92,7 +90,7 @@ module Interface
 
 	%update electricity
 	electricity_consumption := prod_per_tick / 6.0
-	electricity_stored += electricity_production - electricity_consumption
+	electricity_stored += (electricity_production - electricity_consumption) / 60.0
 	if electricity_stored < 0 then
 	    electricity_stored := 0
 	elsif electricity_stored > electricity_storage then
@@ -250,11 +248,14 @@ module Interface
 	prod_dist_ys_count := j - 1
     end update_item_list
 
+    %beginning of draw_interface ******************************************
+    %^ this is so I can find this easily while scrolling ******************
+    %**********************************************************************
     proc draw_interface
 	Draw.FillBox (INTFC_BEGIN, 00, 1100, 800, 30)
 
 	var str : string := frealstr (prod_per_tick * 60, 1, 1)
-	var spc : int := (15 - length (str)) * NMRL_STR_WIDTH + PROD_STR_WIDTH
+	var spc : int := (13 - length (str)) * NMRL_STR_WIDTH + PROD_STR_WIDTH
 	var alloc_agg : real := 0
 	var cur_y : int := ALLOC_BEGIN
 	var next_y : int
@@ -262,13 +263,17 @@ module Interface
 	var tot_h : int
 	var dmmy : int
 
-	Font.Draw ("Production: ", INTFC_BEGIN + 30, 760, font, 18)
+	Font.Draw ("Production", INTFC_BEGIN + 30, 760, font, 18)
 	Font.Draw (str, INTFC_BEGIN + 30 + spc, 760, font, black)
 
 	str := frealstr (electricity_stored, 1, 1)
-	spc := (15 - length (str)) * NMRL_STR_WIDTH + PROD_STR_WIDTH
-	Font.Draw ("Electricity Stored: ", INTFC_BEGIN + 30, 740, font, 18)
-	Font.Draw (str, INTFC_BEGIN + 30 + spc, 740, font, black)
+	spc := (13 - length (str)) * NMRL_STR_WIDTH + PROD_STR_WIDTH
+	Font.Draw ("Electricity Stored", INTFC_BEGIN + 30, 740, font, 18)
+	Font.Draw (str + " / " + intstr (round (electricity_storage)), INTFC_BEGIN + 30 + spc, 740, font, black)
+
+	Draw.FillBox (INTFC_BEGIN + 30, 730, maxx - 30, 735, black)
+	dmmy := floor ((maxx - INTFC_BEGIN - 62) * electricity_stored / electricity_storage + INTFC_BEGIN + 31)
+	Draw.FillBox (INTFC_BEGIN + 31, 731, dmmy, 734, brightgreen)
 
 	for i : 1 .. TURRET_T_NUM
 	    if turret_enabled (i) then
@@ -344,14 +349,15 @@ module Interface
 	update_item_list
 	var moved : boolean := false
 	var db : int := min (50, floor (ALLOC_HEIGHT / num_parts))
+	^ (prod_dist_ys (num_parts)) := max ( ^ (prod_dist_ys (num_parts)), db)
 	loop
-	    for i : 1 .. num_parts-1
+	    for i : 1 .. num_parts - 2
 		if ^ (prod_dist_ys (i)) - db < ^ (prod_dist_ys (i + 1)) then
 		    ^ (prod_dist_ys (i + 1)) := ^ (prod_dist_ys (i)) - db
 		    moved := true
 		end if
 	    end for
-	    for decreasing i : num_parts .. 2
+	    for decreasing i : num_parts .. 3
 		if ^ (prod_dist_ys (i)) + db > ^ (prod_dist_ys (i - 1)) then
 		    ^ (prod_dist_ys (i - 1)) := ^ (prod_dist_ys (i)) + db
 		    moved := true
@@ -360,16 +366,24 @@ module Interface
 	    exit when moved = false
 	    moved := false
 	end loop
-	
+
 	var cur_x : int := INTFC_BEGIN + 50
 
 	parts_passed := 0
 	Draw.FillBox (cur_x, prod_distribution_prod_y, cur_x + 50, prod_distribution_prod_y - 50, COLORS (parts_passed mod NUM_COLORS + 1))
 	Font.Draw ("Production Infrastructure", cur_x + 60, prod_distribution_prod_y - 12, font, 18)
-	str := frealstr (prod_per_tick / sqrt (prod_per_tick) * prod_per_tick * prod_distribution_prod , 1, 1)
-	spc := (8 - length (str)) * NMRL_STR_WIDTH
-	Font.Draw ("+", cur_x + 60, prod_distribution_prod_y - 32, font, black)
-	Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_prod_y - 32, font, black)
+	if electricity_stored <= 0 and ticks_per_prod < 1 then
+	    str := frealstr (sqrt(prod_per_tick) / prod_per_tick * prod_distribution_prod * 10.0, 1, 1)
+	    spc := (8 - length (str)) * NMRL_STR_WIDTH
+	    Font.Draw ("+", cur_x + 60, prod_distribution_prod_y - 32, font, brightred)
+	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_prod_y - 32, font, brightred)
+	    Font.Draw ("Electricity Low!", cur_x + 60, prod_distribution_prod_y - 47, font, brightred)
+	else
+	    str := frealstr (sqrt(prod_per_tick) * prod_distribution_prod * 10.0, 1, 1)
+	    spc := (8 - length (str)) * NMRL_STR_WIDTH
+	    Font.Draw ("+", cur_x + 60, prod_distribution_prod_y - 32, font, black)
+	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_prod_y - 32, font, black)
+	end if
 
 	parts_passed += 1
 	Draw.FillBox (cur_x, prod_distribution_electricity_y, cur_x + 50, prod_distribution_electricity_y - 50, COLORS (parts_passed mod NUM_COLORS + 1))
@@ -380,12 +394,21 @@ module Interface
 	Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_electricity_y - 32, font, black)
 	str := frealstr (electricity_consumption, 1, 1)
 	spc := (8 - length (str)) * NMRL_STR_WIDTH
-	if electricity_consumption > electricity_production then
+	if electricity_stored / (electricity_consumption - electricity_production) < 60 and electricity_consumption > electricity_production then
 	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_electricity_y - 47, font, brightred)
 	    Font.Draw ("-", cur_x + 60, prod_distribution_electricity_y - 47, font, brightred)
 	else
 	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_electricity_y - 47, font, black)
 	    Font.Draw ("-", cur_x + 60, prod_distribution_electricity_y - 47, font, black)
 	end if
+
+	parts_passed += 1
+	Draw.FillBox (cur_x, prod_distribution_electricity_storage_y, cur_x + 50, prod_distribution_electricity_storage_y - 50, COLORS (parts_passed mod NUM_COLORS + 1))
+	Font.Draw ("Electricity Storage Infrastructure", cur_x + 60, prod_distribution_electricity_storage_y - 12, font, 18)
+	dmmy := floor ((maxx - cur_x - 92) * (1000.0-prod_until_next_e_storage) / 1000.0 + cur_x + 60)
+	Draw.FillBox (cur_x + 60, prod_distribution_electricity_storage_y - 23, maxx - 30, prod_distribution_electricity_storage_y - 18, black)
+	Draw.FillBox (cur_x + 61, prod_distribution_electricity_storage_y - 22, dmmy, prod_distribution_electricity_storage_y - 19, brightgreen)
+	
+
     end draw_interface
 end Interface
