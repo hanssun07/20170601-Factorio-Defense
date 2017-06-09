@@ -74,13 +74,13 @@ module Interface
 	ticks_to_next_prod -= 1
 	loop
 	    exit when ticks_to_next_prod > 0
-	    
+
 	    t := floor (max (-ticks_to_next_prod / ticks_per_prod, 1))
 	    ticks_to_next_prod += t * ticks_per_prod
 	    if electricity_stored > 0 then
 		prod_avail += floor (t)
 	    else
-		prod_avail += min(floor (t),1)
+		prod_avail += min (floor (t), 1)
 	    end if
 	end loop
 
@@ -373,13 +373,13 @@ module Interface
 	Draw.FillBox (cur_x, prod_distribution_prod_y, cur_x + 50, prod_distribution_prod_y - 50, COLORS (parts_passed mod NUM_COLORS + 1))
 	Font.Draw ("Production Infrastructure", cur_x + 60, prod_distribution_prod_y - 12, font, 18)
 	if electricity_stored <= 0 and ticks_per_prod < 1 then
-	    str := frealstr (sqrt(prod_per_tick) / prod_per_tick * prod_distribution_prod * 10.0, 1, 1)
+	    str := frealstr (sqrt (prod_per_tick) / prod_per_tick * prod_distribution_prod * 10.0, 1, 1)
 	    spc := (8 - length (str)) * NMRL_STR_WIDTH
 	    Font.Draw ("+", cur_x + 60, prod_distribution_prod_y - 26, font, brightred)
 	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_prod_y - 26, font, brightred)
 	    Font.Draw ("Electricity Low!", cur_x + 60, prod_distribution_prod_y - 41, font, brightred)
 	else
-	    str := frealstr (sqrt(prod_per_tick) * prod_distribution_prod * 10.0, 1, 1)
+	    str := frealstr (sqrt (prod_per_tick) * prod_distribution_prod * 10.0, 1, 1)
 	    spc := (8 - length (str)) * NMRL_STR_WIDTH
 	    Font.Draw ("+", cur_x + 60, prod_distribution_prod_y - 26, font, black)
 	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_prod_y - 26, font, black)
@@ -405,26 +405,67 @@ module Interface
 	parts_passed += 1
 	Draw.FillBox (cur_x, prod_distribution_electricity_storage_y, cur_x + 50, prod_distribution_electricity_storage_y - 50, COLORS (parts_passed mod NUM_COLORS + 1))
 	Font.Draw ("Electricity Storage Infrastructure", cur_x + 60, prod_distribution_electricity_storage_y - 12, font, 18)
-	dmmy := floor ((maxx - cur_x - 92) * (1000.0-prod_until_next_e_storage) / 1000.0 + cur_x + 60)
+	dmmy := floor ((maxx - cur_x - 92) * (1000.0 - prod_until_next_e_storage) / 1000.0 + cur_x + 60)
 	Draw.FillBox (cur_x + 60, prod_distribution_electricity_storage_y - 23, maxx - 30, prod_distribution_electricity_storage_y - 18, black)
 	Draw.FillBox (cur_x + 61, prod_distribution_electricity_storage_y - 22, dmmy, prod_distribution_electricity_storage_y - 19, brightgreen)
-	
+
 	parts_passed += 1
 	Draw.FillBox (cur_x, prod_distribution_repair_y, cur_x + 50, prod_distribution_repair_y - 50, COLORS (parts_passed mod NUM_COLORS + 1))
 	Font.Draw ("Repair Pack", cur_x + 60, prod_distribution_repair_y - 12, font, 18)
-	dmmy := floor ((maxx - cur_x - 92) * (1.0-(prod_until_next_repair/prod_per_repair)) + cur_x + 60)
+	dmmy := floor ((maxx - cur_x - 92) * (1.0 - (prod_until_next_repair / prod_per_repair)) + cur_x + 60)
 	Draw.FillBox (cur_x + 60, prod_distribution_repair_y - 23, maxx - 30, prod_distribution_repair_y - 18, black)
 	Draw.FillBox (cur_x + 61, prod_distribution_repair_y - 22, dmmy, prod_distribution_repair_y - 19, brightgreen)
-	Font.Draw (frealstr(num_repair_available,1,2), cur_x + 60, prod_distribution_repair_y - 37, font, black)
-	
+	Font.Draw (frealstr (num_repair_available, 1, 2), cur_x + 60, prod_distribution_repair_y - 37, font, black)
+
 	parts_passed += 1
 	Draw.FillBox (cur_x, prod_distribution_wall_y, cur_x + 50, prod_distribution_wall_y - 50, COLORS (parts_passed mod NUM_COLORS + 1))
 	Font.Draw ("Stone Wall", cur_x + 60, prod_distribution_wall_y - 12, font, 18)
-	dmmy := floor ((maxx - cur_x - 92) * (1.0-(prod_until_next_wall/prod_per_wall)) + cur_x + 60)
+	dmmy := floor ((maxx - cur_x - 92) * (1.0 - (prod_until_next_wall / prod_per_wall)) + cur_x + 60)
 	Draw.FillBox (cur_x + 60, prod_distribution_wall_y - 23, maxx - 30, prod_distribution_wall_y - 18, black)
 	Draw.FillBox (cur_x + 61, prod_distribution_wall_y - 22, dmmy, prod_distribution_wall_y - 19, brightgreen)
-	Font.Draw (intstr(num_wall_avail,1), cur_x + 60, prod_distribution_wall_y - 37, font, black)
-	
+	Font.Draw (intstr (num_wall_avail, 1), cur_x + 60, prod_distribution_wall_y - 37, font, black)
 
+	for i : 1 .. TURRET_T_NUM
+	    if turret_enabled (i) then
+		parts_passed += 1
+		Draw.FillBox (cur_x, prod_distribution_turrets_y (i), cur_x + 50, prod_distribution_turrets_y (i) - 50, COLORS (parts_passed mod NUM_COLORS + 1))
+		Font.Draw (turret_names (i), cur_x + 60, prod_distribution_turrets_y (i) - 12, font, 18)
+		dmmy := floor ((maxx - cur_x - 92) * (1.0 - (prod_until_next_turret (i) / prod_per_turret (i))) + cur_x + 60)
+		Draw.FillBox (cur_x + 60, prod_distribution_turrets_y (i) - 23, maxx - 30, prod_distribution_turrets_y (i) - 18, black)
+		Draw.FillBox (cur_x + 61, prod_distribution_turrets_y (i) - 22, dmmy, prod_distribution_turrets_y (i) - 19, brightgreen)
+		Font.Draw (intstr (num_turrets_avail (i), 1), cur_x + 60, prod_distribution_turrets_y (i) - 37, font, black)
+
+		if prod_per_proj (i) > 0 then
+		    parts_passed += 1
+		    Draw.FillBox (cur_x, prod_distribution_proj_y (i), cur_x + 50, prod_distribution_proj_y (i) - 50, COLORS (parts_passed mod NUM_COLORS + 1))
+		    Font.Draw (proj_names (i), cur_x + 60, prod_distribution_proj_y (i) - 12, font, 18)
+		    dmmy := floor ((maxx - cur_x - 92) * (1.0 - (prod_until_next_proj (i) / prod_per_proj (i))) + cur_x + 60)
+		    Draw.FillBox (cur_x + 60, prod_distribution_proj_y (i) - 23, maxx - 30, prod_distribution_proj_y (i) - 18, black)
+		    Draw.FillBox (cur_x + 61, prod_distribution_proj_y (i) - 22, dmmy, prod_distribution_proj_y (i) - 19, brightgreen)
+		    Font.Draw (intstr (num_proj_avail (i), 1), cur_x + 60, prod_distribution_proj_y (i) - 37, font, black)
+		end if
+	    end if
+	end for
+	for i : 1 .. RESEARCH_NUM
+	    if research_enabled (i) then
+		parts_passed += 1
+		Draw.FillBox (cur_x, prod_distribution_research_y (i), cur_x + 50, prod_distribution_research_y (i) - 50, COLORS (parts_passed mod NUM_COLORS + 1))
+		Font.Draw (research_name (i), cur_x + 60, prod_distribution_research_y (i) - 12, font, 18)
+		dmmy := floor ((maxx - cur_x - 92) * (1.0 - (prod_until_research_done (i) / prod_per_research (i))) + cur_x + 60)
+		Draw.FillBox (cur_x + 60, prod_distribution_research_y (i) - 23, maxx - 30, prod_distribution_research_y (i) - 18, black)
+		Draw.FillBox (cur_x + 61, prod_distribution_research_y (i) - 22, dmmy, prod_distribution_research_y (i) - 19, brightgreen)
+		Font.Draw (intstr (ceil (prod_until_research_done (i)), 1) + " left", cur_x + 60, prod_distribution_research_y (i) - 37, font, black)
+	    end if
+	end for
+
+	if rocket_enabled then
+	    parts_passed += 1
+	    Draw.FillBox (cur_x, prod_distribution_rocket_y, cur_x + 50, prod_distribution_rocket_y - 50, COLORS (parts_passed mod NUM_COLORS + 1))
+	    Font.Draw ("Rocket", cur_x + 60, prod_distribution_rocket_y - 12, font, 18)
+	    dmmy := floor ((maxx - cur_x - 92) * prod_until_rocket / 1000000.0 + cur_x + 60)
+	    Draw.FillBox (cur_x + 60, prod_distribution_rocket_y - 23, maxx - 30, prod_distribution_rocket_y - 18, black)
+	    Draw.FillBox (cur_x + 61, prod_distribution_rocket_y - 22, dmmy, prod_distribution_rocket_y - 19, brightgreen)
+	    Font.Draw (intstr (ceil (prod_until_rocket), 1) + " left", cur_x + 60, prod_distribution_rocket_y - 37, font, black)
+	end if
     end draw_interface
 end Interface

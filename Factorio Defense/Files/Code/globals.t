@@ -52,6 +52,7 @@ module Global_Vars
     var proj_dmg_type : array 1 .. PROJ_T_NUM of int
 
     var turret_names : array 1 .. TURRET_T_NUM of string
+    var proj_names : array 1..TURRET_T_NUM of string
     var max_healths_turrets : array 1 .. TURRET_T_NUM of int
     var reload_turrets : array 1 .. TURRET_T_NUM of int
     var armor_turrets : array 1 .. TURRET_T_NUM of array 1 .. DAMAGE_TYPES of int
@@ -157,6 +158,7 @@ module Sidebar
     var research_name : array 1..RESEARCH_NUM of string
     var research_enabled : array 1..RESEARCH_NUM of boolean
     var prod_until_research_done : array 1..RESEARCH_NUM of real
+    var prod_per_research : array 1..RESEARCH_NUM of real
     var research_effect : array 1..RESEARCH_NUM of string
     var research_effect_2 : array 1..RESEARCH_NUM of string
     var research_prereq : array 1..RESEARCH_NUM of array 1..RESEARCH_NUM of boolean

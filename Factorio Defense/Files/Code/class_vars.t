@@ -60,6 +60,7 @@ proc read_data ()
     for i : 1 .. TURRET_T_NUM
 	exit when eof (f)
 	get : f, skip, turret_names (i) : *
+	get : f, skip, proj_names (i) : *
 	get : f, max_healths_turrets (i)
 	get : f, reload_turrets (i)
 	get : f, range_turrets (i)
@@ -91,6 +92,7 @@ proc read_data ()
 	exit when eof(f)
 	get : f, skip, research_name(i) : *
 	get : f, skip, prod_until_research_done(i)
+	prod_per_research(i) := prod_until_research_done(i)
 	get : f, skip, research_effect(i) : *
 	get : f, skip, research_effect_2(i) : *
 	put research_effect(i)
@@ -204,6 +206,7 @@ proc begin_init ()
 	research_enabled(i) := false
 	prod_distribution_research(i) := 0.0
 	prod_distribution_research_user(i) := 0.0
+	prod_until_research_done(i) := prod_per_research(i)
     end for
     
     check_research_prereqs()
