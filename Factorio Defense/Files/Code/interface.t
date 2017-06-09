@@ -375,14 +375,14 @@ module Interface
 	if electricity_stored <= 0 and ticks_per_prod < 1 then
 	    str := frealstr (sqrt(prod_per_tick) / prod_per_tick * prod_distribution_prod * 10.0, 1, 1)
 	    spc := (8 - length (str)) * NMRL_STR_WIDTH
-	    Font.Draw ("+", cur_x + 60, prod_distribution_prod_y - 32, font, brightred)
-	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_prod_y - 32, font, brightred)
-	    Font.Draw ("Electricity Low!", cur_x + 60, prod_distribution_prod_y - 47, font, brightred)
+	    Font.Draw ("+", cur_x + 60, prod_distribution_prod_y - 26, font, brightred)
+	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_prod_y - 26, font, brightred)
+	    Font.Draw ("Electricity Low!", cur_x + 60, prod_distribution_prod_y - 41, font, brightred)
 	else
 	    str := frealstr (sqrt(prod_per_tick) * prod_distribution_prod * 10.0, 1, 1)
 	    spc := (8 - length (str)) * NMRL_STR_WIDTH
-	    Font.Draw ("+", cur_x + 60, prod_distribution_prod_y - 32, font, black)
-	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_prod_y - 32, font, black)
+	    Font.Draw ("+", cur_x + 60, prod_distribution_prod_y - 26, font, black)
+	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_prod_y - 26, font, black)
 	end if
 
 	parts_passed += 1
@@ -390,16 +390,16 @@ module Interface
 	Font.Draw ("Electric Generation Infrastructure", cur_x + 60, prod_distribution_electricity_y - 12, font, 18)
 	str := frealstr (electricity_production, 1, 1)
 	spc := (8 - length (str)) * NMRL_STR_WIDTH
-	Font.Draw ("+", cur_x + 60, prod_distribution_electricity_y - 32, font, black)
-	Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_electricity_y - 32, font, black)
+	Font.Draw ("+", cur_x + 60, prod_distribution_electricity_y - 26, font, black)
+	Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_electricity_y - 26, font, black)
 	str := frealstr (electricity_consumption, 1, 1)
 	spc := (8 - length (str)) * NMRL_STR_WIDTH
 	if electricity_stored / (electricity_consumption - electricity_production) < 60 and electricity_consumption > electricity_production then
-	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_electricity_y - 47, font, brightred)
-	    Font.Draw ("-", cur_x + 60, prod_distribution_electricity_y - 47, font, brightred)
+	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_electricity_y - 41, font, brightred)
+	    Font.Draw ("-", cur_x + 60, prod_distribution_electricity_y - 41, font, brightred)
 	else
-	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_electricity_y - 47, font, black)
-	    Font.Draw ("-", cur_x + 60, prod_distribution_electricity_y - 47, font, black)
+	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_electricity_y - 41, font, black)
+	    Font.Draw ("-", cur_x + 60, prod_distribution_electricity_y - 41, font, black)
 	end if
 
 	parts_passed += 1
@@ -408,6 +408,22 @@ module Interface
 	dmmy := floor ((maxx - cur_x - 92) * (1000.0-prod_until_next_e_storage) / 1000.0 + cur_x + 60)
 	Draw.FillBox (cur_x + 60, prod_distribution_electricity_storage_y - 23, maxx - 30, prod_distribution_electricity_storage_y - 18, black)
 	Draw.FillBox (cur_x + 61, prod_distribution_electricity_storage_y - 22, dmmy, prod_distribution_electricity_storage_y - 19, brightgreen)
+	
+	parts_passed += 1
+	Draw.FillBox (cur_x, prod_distribution_repair_y, cur_x + 50, prod_distribution_repair_y - 50, COLORS (parts_passed mod NUM_COLORS + 1))
+	Font.Draw ("Repair Pack", cur_x + 60, prod_distribution_repair_y - 12, font, 18)
+	dmmy := floor ((maxx - cur_x - 92) * (1.0-(prod_until_next_repair/prod_per_repair)) + cur_x + 60)
+	Draw.FillBox (cur_x + 60, prod_distribution_repair_y - 23, maxx - 30, prod_distribution_repair_y - 18, black)
+	Draw.FillBox (cur_x + 61, prod_distribution_repair_y - 22, dmmy, prod_distribution_repair_y - 19, brightgreen)
+	Font.Draw (frealstr(num_repair_available,1,2), cur_x + 60, prod_distribution_repair_y - 37, font, black)
+	
+	parts_passed += 1
+	Draw.FillBox (cur_x, prod_distribution_wall_y, cur_x + 50, prod_distribution_wall_y - 50, COLORS (parts_passed mod NUM_COLORS + 1))
+	Font.Draw ("Stone Wall", cur_x + 60, prod_distribution_wall_y - 12, font, 18)
+	dmmy := floor ((maxx - cur_x - 92) * (1.0-(prod_until_next_wall/prod_per_wall)) + cur_x + 60)
+	Draw.FillBox (cur_x + 60, prod_distribution_wall_y - 23, maxx - 30, prod_distribution_wall_y - 18, black)
+	Draw.FillBox (cur_x + 61, prod_distribution_wall_y - 22, dmmy, prod_distribution_wall_y - 19, brightgreen)
+	Font.Draw (intstr(num_wall_avail,1), cur_x + 60, prod_distribution_wall_y - 37, font, black)
 	
 
     end draw_interface
