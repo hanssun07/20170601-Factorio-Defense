@@ -25,7 +25,7 @@ module Constants
     const ENEMY_T_NUM : int := 8
     const PROJ_NUM : int := 100
     const TURRET_NUM : int := 100
-    const ENEMY_NUM : int := 50
+    const ENEMY_NUM : int := 5
     const PROJ_QUEUE_NUM : int := (TURRET_NUM + ENEMY_NUM) div 2
     
     const ENEMY_MVT_TILES_PER_SEC : real := 0.16

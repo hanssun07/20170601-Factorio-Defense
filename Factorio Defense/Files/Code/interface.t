@@ -623,26 +623,29 @@ module Interface
 	    var mx : int := x div PIXELS_PER_GRID + 1
 	    var my : int := y div PIXELS_PER_GRID + 1
 	    if mouse_item_selected = 5 then
-		if bn mod 10 = 1 then
-		    if mx >= MAP_B_W_L and mx <= MAP_B_W_U and my >= MAP_B_H_L and my <= MAP_B_H_U then
-			if map (mx) (my) -> class_type < TURRET then
-			    ^ (map (mx) (my)) := make_ev (ALIVE, 350, 0, 0, 0, WALL, make_v (mx, my))
-			    ticks_to_repath -= 20
+		if num_wall_avail > 0 then
+		    if bn mod 10 = 1 then
+			if mx >= MAP_B_W_L and mx <= MAP_B_W_U and my >= MAP_B_H_L and my <= MAP_B_H_U then
+			    if map (mx) (my) -> class_type < TURRET then
+				^ (map (mx) (my)) := make_ev (ALIVE, 350, 0, 0, 0, WALL, make_v (mx, my))
+				ticks_to_repath -= 20
+				num_wall_avail -= 1
+			    else
+				Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 3, (my - 1) * PIXELS_PER_GRID + 3, (mx) * PIXELS_PER_GRID - 3, (my) * PIXELS_PER_GRID - 3, red)
+			    end if
 			else
 			    Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 3, (my - 1) * PIXELS_PER_GRID + 3, (mx) * PIXELS_PER_GRID - 3, (my) * PIXELS_PER_GRID - 3, red)
 			end if
 		    else
-			Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 3, (my - 1) * PIXELS_PER_GRID + 3, (mx) * PIXELS_PER_GRID - 3, (my) * PIXELS_PER_GRID - 3, red)
-		    end if
-		else
-		    if mx >= MAP_B_W_L and mx <= MAP_B_W_U and my >= MAP_B_H_L and my <= MAP_B_H_U then
-			if map (mx) (my) -> class_type < TURRET then
-			    Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 2, (my - 1) * PIXELS_PER_GRID + 2, (mx) * PIXELS_PER_GRID - 2, (my) * PIXELS_PER_GRID - 2, green)
+			if mx >= MAP_B_W_L and mx <= MAP_B_W_U and my >= MAP_B_H_L and my <= MAP_B_H_U then
+			    if map (mx) (my) -> class_type < TURRET then
+				Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 2, (my - 1) * PIXELS_PER_GRID + 2, (mx) * PIXELS_PER_GRID - 2, (my) * PIXELS_PER_GRID - 2, green)
+			    else
+				Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 2, (my - 1) * PIXELS_PER_GRID + 2, (mx) * PIXELS_PER_GRID - 2, (my) * PIXELS_PER_GRID - 2, red)
+			    end if
 			else
 			    Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 2, (my - 1) * PIXELS_PER_GRID + 2, (mx) * PIXELS_PER_GRID - 2, (my) * PIXELS_PER_GRID - 2, red)
 			end if
-		    else
-			Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 2, (my - 1) * PIXELS_PER_GRID + 2, (mx) * PIXELS_PER_GRID - 2, (my) * PIXELS_PER_GRID - 2, red)
 		    end if
 		end if
 	    end if

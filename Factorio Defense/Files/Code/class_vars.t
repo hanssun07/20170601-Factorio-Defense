@@ -109,8 +109,8 @@ proc read_data ()
 end read_data
 
 proc begin_init ()
-    for i : MAP_B_W_L .. MAP_B_W_U
-	for j : MAP_B_H_L .. MAP_B_H_U
+    for i : 1 .. MAP_WIDTH
+	for j : 1 .. MAP_HEIGHT
 	    map_handler (i) (j) := make_ev (NONEXISTENT, 0, 0, 0, 0, FLOOR, make_v (i, j))
 	    cheat (addressint, map (i) (j)) := addr (map_handler (i) (j))
 	end for
@@ -155,7 +155,7 @@ proc begin_init ()
     chunks_avail_for_spawn := MAP_M_WID + MAP_M_HEI * 2 - 2
 
     prod_avail := 0
-    prod_per_tick := 10 / 60
+    prod_per_tick := 1000 / 60
     ticks_to_next_prod := 6
     ticks_per_prod := 6
     prod_distribution_prod := 1
@@ -374,9 +374,7 @@ proc path_map ()
 		    end if
 		    nn.weight += map_deaths (i) (j) * 0.2
 		    nn.weight += Rand.Real () * 0.001
-		    if MAP_B_W_L <= i and MAP_B_W_U >= i and MAP_B_H_L <= j and MAP_B_H_U >= j then
-			nn.weight += map (i) (j) -> effective_health * 0.2
-		    end if
+		    nn.weight += map (i) (j) -> effective_health * 0.2
 		    %check if new attempt is shortest; if so, add to heap
 		    if map_weights (i) (j) > nn.weight then
 			map_mov (0) (i) (j) := make_v (cn.x - i, cn.y - j)
@@ -415,9 +413,7 @@ proc path_map ()
 		    end if
 		    nn.weight += map_deaths (i) (j) * 0.4
 		    nn.weight += Rand.Real () * 0.001
-		    if MAP_B_W_L <= i and MAP_B_W_U >= i and MAP_B_H_L <= j and MAP_B_H_U >= j then
-			nn.weight += map (i) (j) -> effective_health * 0.2
-		    end if
+		    nn.weight += map (i) (j) -> effective_health * 0.2
 		    %check if new attempt is shortest; if so, add to heap
 		    if map_weights (i) (j) > nn.weight then
 			map_mov (1) (i) (j) := make_v (cn.x - i, cn.y - j)
@@ -466,7 +462,7 @@ proc draw_map ()
 		Draw.FillBox ((i - 1) * PIXELS_PER_GRID, (j - 1) * PIXELS_PER_GRID, (i) * PIXELS_PER_GRID, (j) * PIXELS_PER_GRID, darkgrey)
 		if map (i) (j) -> health < 350 then
 		    Draw.Line ((i - 1) * PIXELS_PER_GRID, (j - 1) * PIXELS_PER_GRID, floor ((i - 1 + map (i) (j) -> health / 350) * PIXELS_PER_GRID), (j - 1) * PIXELS_PER_GRID, brightgreen)
-		    Draw.Line (ceil ((i - 1 + map (i) (j) -> health / 350) * PIXELS_PER_GRID), (j - 1) * PIXELS_PER_GRID, ((i) * PIXELS_PER_GRID), (j - 1) * PIXELS_PER_GRID, brightgreen)
+		    Draw.Line (ceil ((i - 1 + map (i) (j) -> health / 350) * PIXELS_PER_GRID), (j - 1) * PIXELS_PER_GRID, ((i) * PIXELS_PER_GRID), (j - 1) * PIXELS_PER_GRID, brightred)
 		end if
 	    end if
 	end for
@@ -542,37 +538,55 @@ proc resolve_targets
 	    %easier on eyes
 	    v := enemies (e) -> v
 
-	    %initialize min-finder
-	    shortest := 4294967296.0
-
-	    %check in the appropriate chunks
-	    for i : floor (max (1, (v.loc.x - range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
-		    floor (min (MAP_M_WID, (v.loc.x + range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1))
-		for j : floor (max (1, (v.loc.y - range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
-			floor (min (MAP_M_HEI, (v.loc.y + range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1))
-		    check := map_meta_sem (i) (j)
-		    for k : 1 .. MAP_M_CAP
-			exit when check <= 0
-			if map_meta (i) (j) (k) not= nil then
-			    if map_meta (i) (j) (k) -> class_type >= TURRET and map_meta (i) (j) (k) -> effective_health > 0 then
-				%triple the effective distance if a wall
-				cur := distance_squared (map_meta (i) (j) (k) -> loc, v.loc) *
-				    map_meta (i) (j) (k) -> class_type
-				if cur < shortest then
-				    u := map_meta (i) (j) (k)
-				    shortest := cur
-				end if
-			    end if
-			    check -= 1
+	    var found : boolean := false
+	    for i : floor (max (MAP_B_W_L, v.loc.x - 1)) .. floor (min (MAP_B_W_U, v.loc.x + 1))
+		for j : floor (max (MAP_B_H_L, v.loc.y - 1)) .. floor (min (MAP_B_H_U, v.loc.y + 1))
+		    if map (i) (j) -> class_type = WALL then
+			if Math.Distance (i, j, v.loc.x, v.loc.y) < 0.7 then
+			    enemies(e)->v.cur_target := map (i) (j)
+			    found := true
+			    exit
 			end if
-		    end for
+		    end if
 		end for
+		exit when found
 	    end for
 
-	    if shortest >= 4294967295.0 or distance_squared (u -> loc, v.loc) > range_enemies (v.e_type) ** 2 then
-		enemies (e) -> v.cur_target := nil
-	    else
-		enemies (e) -> v.cur_target := u
+	    if not found then
+
+		%initialize min-finder
+		shortest := 4294967296.0
+
+		%check in the appropriate chunks
+		for i : floor (max (1, (v.loc.x - range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
+			floor (min (MAP_M_WID, (v.loc.x + range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1))
+		    for j : floor (max (1, (v.loc.y - range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
+			    floor (min (MAP_M_HEI, (v.loc.y + range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1))
+			check := map_meta_sem (i) (j)
+			for k : 1 .. MAP_M_CAP
+			    exit when check <= 0
+			    if map_meta (i) (j) (k) not= nil then
+				if map_meta (i) (j) (k) -> class_type >= TURRET and map_meta (i) (j) (k) -> effective_health > 0 then
+				    %triple the effective distance if a wall
+				    cur := distance_squared (map_meta (i) (j) (k) -> loc, v.loc) *
+					map_meta (i) (j) (k) -> class_type
+				    if cur < shortest then
+					u := map_meta (i) (j) (k)
+					shortest := cur
+				    end if
+				end if
+				check -= 1
+			    end if
+			end for
+		    end for
+		end for
+
+		if shortest >= 4294967295.0 or distance_squared (u -> loc, v.loc) > range_enemies (v.e_type) ** 2 then
+		    enemies (e) -> v.cur_target := nil
+		else
+		    enemies (e) -> v.cur_target := u
+		end if
+
 	    end if
 
 	    enemy_on_standby (e) := false
@@ -622,3 +636,22 @@ proc resolve_targets
 	end if
     end for
 end resolve_targets
+
+proc update_map
+    for i : 1 .. MAP_WIDTH
+	for j : 1 .. MAP_HEIGHT
+	    map_deaths (i) (j) := max (map_deaths (i) (j) - 1 / 3600, 0)
+	    if map (i) (j) -> class_type = WALL then
+		if map (i) (j) -> health <= 0 then
+		    map_handler (i) (j) := make_ev (NONEXISTENT, 0, 0, 0, 0, FLOOR, make_v (i, j))
+		end if
+	    end if
+	    if map (i) (j) -> class_type = TURRET then
+		if map (i) (j) -> health <= 0 then
+		    map_handler (i) (j) := make_ev (NONEXISTENT, 0, 0, 0, 0, FLOOR, make_v (i, j))
+		end if
+	    end if
+	end for
+    end for
+end update_map
+
