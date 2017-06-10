@@ -119,6 +119,7 @@ module Class_Vars
 	    p_type : int
 	    loc : point
 	    state : int
+	    dmg : int
 	end record
     type path_vars :
 	record
@@ -204,7 +205,7 @@ module Class_Vars
 	end if
     end unlock_sem
     
-    fcn real_damage(damage, dt : int, armor : array 1..DAMAGE_TYPES of int)
+    fcn real_damage(damage, dt : int, armor : array 1..DAMAGE_TYPES of int) : int
 	result floor(damage*0.01*(100-armor(dt)) + Rand.Real())
     end real_damage
 end Class_Vars

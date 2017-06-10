@@ -141,7 +141,7 @@ proc begin_init ()
 	enemy_on_standby (i) := false
     end for
     for i : 1 .. PROJ_NUM
-	projectiles (i) -> initialize (0, FLOOR, make_v (0, 0))
+	projectiles (i) -> initialize (0, FLOOR, make_v (0, 0),0)
 	projectiles (i) -> v.state := NONEXISTENT
     end for
     turrets_on_standby := 0
@@ -225,7 +225,8 @@ proc resolve_projectiles ()
 	    proj_queue (last_proj_queue).target,
 	% proj_queue (last_proj_queue).target_type,
 	    proj_queue (last_proj_queue).p_type,
-	    proj_queue (last_proj_queue).loc)
+	    proj_queue (last_proj_queue).loc,
+	    proj_queue (last_proj_queue).dmg)
 
 	next_projectile := (next_projectile mod PROJ_NUM) + 1
 	last_proj_queue := (last_proj_queue mod PROJ_QUEUE_NUM) + 1

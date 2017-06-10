@@ -22,12 +22,13 @@ class Projectile
 
 
     proc initialize (t : cheat
-	unchecked ^entity_vars, pt : int, l : point)
+	unchecked ^entity_vars, pt : int, l : point, dmg : int)
 	v.target := t
 	%v.target_type := tt
 	v.p_type := pt
 	v.loc := l
 	v.state := ALIVE
+	v.dmg := dmg
     end initialize
 
     %update

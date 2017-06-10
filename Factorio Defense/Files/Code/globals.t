@@ -51,7 +51,7 @@ module Global_Vars
     var proj_sprite : array 1 .. PROJ_T_NUM of int
     var proj_dmg_type : array 1 .. PROJ_T_NUM of int
     
-    var armor_wall : array 1..DAMAGE_TYPES of int := init{30,100,0,0}
+    var armor_wall : array 1..DAMAGE_TYPES of int := init(30,100,0,0)
 
     var turret_names : array 1 .. TURRET_T_NUM of string
     var proj_names : array 1..TURRET_T_NUM of string
@@ -98,6 +98,7 @@ module Global_Vars
     var can_build_turrets : boolean := true
     
     var enemies_through : int := 0
+    var ticks_passed : int := 0
 end Global_Vars
 
 module Sidebar

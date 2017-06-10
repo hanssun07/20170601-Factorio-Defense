@@ -165,9 +165,9 @@ class Enemy
 	proj_queue (next_proj_queue).state := ALIVE
 	
 	if u -> class_type = TURRET then
-	    proj_queue (next_proj_queue).dmg := real_damage (proj_damage (proj_enemies (v.e_type)), proj_damage_type (proj_enemies (v.e_type)), armor_turrets (u -> e_type)
+	    proj_queue (next_proj_queue).dmg := real_damage (proj_damage (proj_enemies (v.e_type)), proj_dmg_type (proj_enemies (v.e_type)), armor_turrets (u -> e_type))
 	else
-	    proj_queue (next_proj_queue).dmg := real_damage (proj_damage (proj_enemies (v.e_type)), proj_damage_type (proj_enemies (v.e_type)), armor_wall)
+	    proj_queue (next_proj_queue).dmg := real_damage (proj_damage (proj_enemies (v.e_type)), proj_dmg_type (proj_enemies (v.e_type)), armor_wall)
 	end if
 	u->effective_health -= proj_queue (next_proj_queue).dmg
 
