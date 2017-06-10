@@ -175,6 +175,7 @@ module Sidebar
     
     var prod_dist_ys_count : int
     var prod_dist_ys : array 1..50 of unchecked ^int
+    var prod_dist_selectable : array 1..50 of boolean
     
     var font : int
     
@@ -188,6 +189,16 @@ module Sidebar
     
     var PROD_STR_WIDTH : int
     var NMRL_STR_WIDTH : int
+    
+    const PRESSED : int := 1
+    const RELEASED : int := 0
+    const LEFT : int := 1
+    const MIDDLE : int := 2
+    const RIGHT : int := 3
+    var mouse_on_alloc_bar : boolean := false
+    var alloc_bar_selected : int := 0
+    var mouse_over_item : int := 1
+    var mouse_item_selected : int := 1
     
 end Sidebar
 

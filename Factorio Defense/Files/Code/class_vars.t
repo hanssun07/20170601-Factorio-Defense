@@ -44,6 +44,8 @@ proc startup_init ()
     font := Font.New("serif:12")
     PROD_STR_WIDTH := max(Font.Width("Production: ", font), Font.Width("Electricity Stored: ", font))
     NMRL_STR_WIDTH := Font.Width("0", font)
+    
+    Mouse.ButtonChoose ("multibutton")
 end startup_init
 
 proc read_data ()
@@ -155,7 +157,7 @@ proc begin_init ()
     chunks_avail_for_spawn := MAP_M_WID + MAP_M_HEI * 2 - 2
     
     prod_avail := 0
-    prod_per_tick := 10/60
+    prod_per_tick := 10000/60
     ticks_to_next_prod := 6
     ticks_per_prod := 6
     prod_distribution_prod := 1
