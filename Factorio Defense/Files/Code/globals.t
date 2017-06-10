@@ -34,10 +34,10 @@ module Constants
     
     const MAP_WIDTH : int := 50
     const MAP_HEIGHT : int := 50
-    const MAP_B_W_L : int := 11             %map "build allowed" width lower limit
-    const MAP_B_W_U : int := MAP_WIDTH-10   %map "build allowed" width upper limit
+    const MAP_B_W_L : int := 6             %map "build allowed" width lower limit
+    const MAP_B_W_U : int := MAP_WIDTH-5   %map "build allowed" width upper limit
     const MAP_B_H_L : int := 1              %map "build allowed" height lower limit
-    const MAP_B_H_U : int := MAP_HEIGHT-10  %map "build allowed" height upper limit
+    const MAP_B_H_U : int := MAP_HEIGHT-5  %map "build allowed" height upper limit
     const MAP_M_SIZ : int := 5                          %metamap block size
     const MAP_M_WID : int := MAP_WIDTH div MAP_M_SIZ    %width of metamap
     const MAP_M_HEI : int := MAP_HEIGHT div MAP_M_SIZ   %height of metamap
@@ -99,6 +99,7 @@ module Global_Vars
     
     var enemies_through : int := 0
     var ticks_passed : int := 0
+    var ticks_to_repath : int := 600
 end Global_Vars
 
 module Sidebar

@@ -176,7 +176,7 @@ module Interface
 	    if prod_until_research_done (i) <= 0 then
 		research_enabled (i) := false
 		prod_distribution_research (i) := 0
-		prod_distribution_research_user(i) := 0
+		prod_distribution_research_user (i) := 0
 
 		%handle research effects
 		apply_research_effects (i)
@@ -582,14 +582,16 @@ module Interface
 		alloc_bar_selected := 0
 	    end if
 
-	    mouse_item_selected := 1
-	    if bn = LEFT then
-		for i : 1 .. prod_dist_ys_count
-		    if (x > ACTUAL_BEGIN + 50 and x < ACTUAL_BEGIN + 100 and y > ^ (prod_dist_ys (i)) - 50 and y < ^ (prod_dist_ys (i))) then
-			mouse_item_selected := i
-			exit
-		    end if
-		end for
+	    if x > INTFC_BEGIN then
+		mouse_item_selected := 1
+		if bn = LEFT then
+		    for i : 1 .. prod_dist_ys_count
+			if (x > ACTUAL_BEGIN + 50 and x < ACTUAL_BEGIN + 100 and y > ^ (prod_dist_ys (i)) - 50 and y < ^ (prod_dist_ys (i))) then
+			    mouse_item_selected := i
+			    exit
+			end if
+		    end for
+		end if
 	    end if
 	end loop
 
@@ -614,7 +616,36 @@ module Interface
 	    Draw.Line (part, bar_s_y, part + 200, bar_s_y, black)
 	    Draw.Line (part, bar_s_y - 2, part, bar_s_y + 2, black)
 	    Draw.Line (part + 200, bar_s_y - 2, part + 200, bar_s_y + 2, black)
-	    ^ (prod_dist_allocs (alloc_bar_selected)) := min (1, max (0, (x-part) / 200))
+	    ^ (prod_dist_allocs (alloc_bar_selected)) := min (1, max (0, (x - part) / 200))
+	end if
+
+	if x < INTFC_BEGIN then
+	    var mx : int := x div PIXELS_PER_GRID + 1
+	    var my : int := y div PIXELS_PER_GRID + 1
+	    if mouse_item_selected = 5 then
+		if bn mod 10 = 1 then
+		    if mx >= MAP_B_W_L and mx <= MAP_B_W_U and my >= MAP_B_H_L and my <= MAP_B_H_U then
+			if map (mx) (my) -> class_type < TURRET then
+			    ^ (map (mx) (my)) := make_ev (ALIVE, 350, 0, 0, 0, WALL, make_v (mx, my))
+			    ticks_to_repath -= 20
+			else
+			    Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 3, (my - 1) * PIXELS_PER_GRID + 3, (mx) * PIXELS_PER_GRID - 3, (my) * PIXELS_PER_GRID - 3, red)
+			end if
+		    else
+			Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 3, (my - 1) * PIXELS_PER_GRID + 3, (mx) * PIXELS_PER_GRID - 3, (my) * PIXELS_PER_GRID - 3, red)
+		    end if
+		else
+		    if mx >= MAP_B_W_L and mx <= MAP_B_W_U and my >= MAP_B_H_L and my <= MAP_B_H_U then
+			if map (mx) (my) -> class_type < TURRET then
+			    Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 2, (my - 1) * PIXELS_PER_GRID + 2, (mx) * PIXELS_PER_GRID - 2, (my) * PIXELS_PER_GRID - 2, green)
+			else
+			    Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 2, (my - 1) * PIXELS_PER_GRID + 2, (mx) * PIXELS_PER_GRID - 2, (my) * PIXELS_PER_GRID - 2, red)
+			end if
+		    else
+			Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 2, (my - 1) * PIXELS_PER_GRID + 2, (mx) * PIXELS_PER_GRID - 2, (my) * PIXELS_PER_GRID - 2, red)
+		    end if
+		end if
+	    end if
 	end if
 
     end handle_input
