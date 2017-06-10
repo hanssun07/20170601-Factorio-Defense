@@ -106,21 +106,26 @@ loop
 
 	for i : 1 .. 0
 	    for j : 1 .. 10
-		locate(50-(j*5-3),i*10-5)
-		put map_meta_sem(i)(j)..
+		locate (50 - (j * 5 - 3), i * 10 - 5)
+		put map_meta_sem (i) (j) ..
 	    end for
 	end for
-	
+
 	%prod_per_tick *= 1.01
 	int_tick
 	draw_interface
+	handle_input
 
 	View.Update
 	%exit when e -> v.state = NONEXISTENT
-	t := (t+1)mod 360
-	Draw.Line(810, 400-t, 810+Time.Elapsed - tick, 400-t, black)
-	Draw.Line(810, 400-(t+1)mod 360, 910, 400-(t+1)mod 360, white)
-	Draw.Dot(810+16, 400-(t+1)mod 360, brightred)
+
+	if false then
+	    t := (t + 1) mod 360
+	    Draw.Line (810, 400 - t, 810 + Time.Elapsed - tick, 400 - t, black)
+	    Draw.Line (810, 400 - (t + 1) mod 360, 910, 400 - (t + 1) mod 360, white)
+	    Draw.Dot (810 + 16, 400 - (t + 1) mod 360, brightred)
+	end if
+
 	delay (16 - Time.Elapsed + tick)
     end loop
     % loop back to menu if play again

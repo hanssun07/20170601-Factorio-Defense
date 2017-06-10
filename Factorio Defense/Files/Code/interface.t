@@ -1,4 +1,5 @@
 module Interface
+    import Mouse
     export var pervasive unqualified all
 
 
@@ -6,41 +7,19 @@ module Interface
     forward proc apply_effect (effect : string)
     forward proc check_research_prereqs ()
 
+    proc move_towards (var f : real, t, r : real)
+	f += (t - f) * r
+    end move_towards
+
     proc fix_int ()
 	var tot_dist : real := 0
 	var dist_mult : real
-	tot_dist += prod_distribution_prod
-	tot_dist += prod_distribution_electricity
-	tot_dist += prod_distribution_electricity_storage
-	tot_dist += prod_distribution_repair
-	tot_dist += prod_distribution_rocket
-	for i : 1 .. TURRET_T_NUM
-	    tot_dist += prod_distribution_turrets (i)
-	    tot_dist += prod_distribution_proj (i)
-	end for
-	for i : 1 .. RESEARCH_NUM
-	    tot_dist += prod_distribution_research (i)
-	end for
 
-	dist_mult := 1.0 / tot_dist
-	prod_distribution_prod *= dist_mult
-	prod_distribution_electricity *= dist_mult
-	prod_distribution_electricity_storage *= dist_mult
-	prod_distribution_repair *= dist_mult
-	prod_distribution_rocket *= dist_mult
-	for i : 1 .. TURRET_T_NUM
-	    prod_distribution_turrets (i) *= dist_mult
-	    prod_distribution_proj (i) *= dist_mult
-	end for
-	for i : 1 .. RESEARCH_NUM
-	    prod_distribution_research (i) *= dist_mult
-	end for
-
-	tot_dist := 0
 	tot_dist += prod_distribution_prod_user
 	tot_dist += prod_distribution_electricity_user
 	tot_dist += prod_distribution_electricity_storage_user
 	tot_dist += prod_distribution_repair_user
+	tot_dist += prod_distribution_wall_user
 	tot_dist += prod_distribution_rocket_user
 	for i : 1 .. TURRET_T_NUM
 	    tot_dist += prod_distribution_turrets_user (i)
@@ -55,6 +34,7 @@ module Interface
 	prod_distribution_electricity_user *= dist_mult
 	prod_distribution_electricity_storage_user *= dist_mult
 	prod_distribution_repair_user *= dist_mult
+	prod_distribution_wall_user *= dist_mult
 	prod_distribution_rocket_user *= dist_mult
 	for i : 1 .. TURRET_T_NUM
 	    prod_distribution_turrets_user (i) *= dist_mult
@@ -63,6 +43,53 @@ module Interface
 	for i : 1 .. RESEARCH_NUM
 	    prod_distribution_research_user (i) *= dist_mult
 	end for
+
+	move_towards (prod_distribution_prod, prod_distribution_prod_user, 0.1)
+	move_towards (prod_distribution_electricity, prod_distribution_electricity_user, 0.1)
+	move_towards (prod_distribution_electricity_storage, prod_distribution_electricity_storage_user, 0.1)
+	move_towards (prod_distribution_repair, prod_distribution_repair_user, 0.1)
+	move_towards (prod_distribution_wall, prod_distribution_wall_user, 0.1)
+	move_towards (prod_distribution_rocket, prod_distribution_rocket_user, 0.1)
+	for i : 1 .. TURRET_T_NUM
+	    move_towards (prod_distribution_turrets (i), prod_distribution_turrets_user (i), 0.1)
+	    move_towards (prod_distribution_proj (i), prod_distribution_proj_user (i), 0.1)
+	end for
+	for i : 1 .. RESEARCH_NUM
+	    move_towards (prod_distribution_research (i), prod_distribution_research_user (i), 0.1)
+	end for
+
+
+	tot_dist := 0
+	tot_dist += prod_distribution_prod
+	tot_dist += prod_distribution_electricity
+	tot_dist += prod_distribution_electricity_storage
+	tot_dist += prod_distribution_repair
+	tot_dist += prod_distribution_wall
+	tot_dist += prod_distribution_rocket
+	for i : 1 .. TURRET_T_NUM
+	    tot_dist += prod_distribution_turrets (i)
+	    tot_dist += prod_distribution_proj (i)
+	end for
+	for i : 1 .. RESEARCH_NUM
+	    tot_dist += prod_distribution_research (i)
+	end for
+
+	dist_mult := 1.0 / tot_dist
+	prod_distribution_prod *= dist_mult
+	prod_distribution_electricity *= dist_mult
+	prod_distribution_electricity_storage *= dist_mult
+	prod_distribution_repair *= dist_mult
+	prod_distribution_wall *= dist_mult
+	prod_distribution_rocket *= dist_mult
+	for i : 1 .. TURRET_T_NUM
+	    prod_distribution_turrets (i) *= dist_mult
+	    prod_distribution_proj (i) *= dist_mult
+	end for
+	for i : 1 .. RESEARCH_NUM
+	    prod_distribution_research (i) *= dist_mult
+	end for
+
+
     end fix_int
 
     proc int_tick ()
@@ -193,15 +220,15 @@ module Interface
 	var tmp, tmp2 : int
 	if effect (1 .. 11) = "proj_damage" then
 	    tmp := index (effect, " ") + 1
-	    tmp2 := index (effect (tmp .. *), " ") + 1
+	    tmp2 := index (effect (tmp .. *), " ") + tmp
 	    proj_damage (strint (effect (tmp .. tmp2 - 2))) := strint (effect (tmp2 .. *))
 	elsif effect (1 .. 11) = "proj_sprite" then
 	    tmp := index (effect, " ") + 1
-	    tmp2 := index (effect (tmp .. *), " ") + 1
+	    tmp2 := index (effect (tmp .. *), " ") + tmp
 	    proj_sprite (strint (effect (tmp .. tmp2 - 2))) := strint (effect (tmp2 .. *))
 	elsif effect (1 .. 14) = "reload_turrets" then
 	    tmp := index (effect, " ") + 1
-	    tmp2 := index (effect (tmp .. *), " ") + 1
+	    tmp2 := index (effect (tmp .. *), " ") + tmp
 	    reload_turrets (strint (effect (tmp .. tmp2 - 2))) := strint (effect (tmp2 .. *))
 	elsif effect (1 .. 14) = "turret_enabled" then
 	    turret_enabled (strint (effect (index (effect, " ") .. *))) := true
@@ -220,17 +247,24 @@ module Interface
 
     proc update_item_list
 	cheat (addressint, prod_dist_ys (1)) := addr (prod_distribution_prod_y)
+	prod_dist_selectable (1) := false
 	cheat (addressint, prod_dist_ys (2)) := addr (prod_distribution_electricity_y)
+	prod_dist_selectable (2) := false
 	cheat (addressint, prod_dist_ys (3)) := addr (prod_distribution_electricity_storage_y)
+	prod_dist_selectable (3) := false
 	cheat (addressint, prod_dist_ys (4)) := addr (prod_distribution_repair_y)
+	prod_dist_selectable (4) := true
 	cheat (addressint, prod_dist_ys (5)) := addr (prod_distribution_wall_y)
+	prod_dist_selectable (5) := true
 	var j : int := 6
 	for i : 1 .. TURRET_T_NUM
 	    if (turret_enabled (i)) then
 		cheat (addressint, prod_dist_ys (j)) := addr (prod_distribution_turrets_y (i))
+		prod_dist_selectable (j) := true
 		j += 1
 		if prod_per_proj (i) > 0 then
 		    cheat (addressint, prod_dist_ys (j)) := addr (prod_distribution_proj_y (i))
+		    prod_dist_selectable (j) := false
 		    j += 1
 		end if
 	    end if
@@ -238,11 +272,13 @@ module Interface
 	for i : 1 .. RESEARCH_NUM
 	    if (research_enabled (i)) then
 		cheat (addressint, prod_dist_ys (j)) := addr (prod_distribution_research_y (i))
+		prod_dist_selectable (j) := false
 		j += 1
 	    end if
 	end for
 	if rocket_enabled then
 	    cheat (addressint, prod_dist_ys (j)) := addr (prod_distribution_rocket)
+	    prod_dist_selectable (j) := false
 	    j += 1
 	end if
 	prod_dist_ys_count := j - 1
@@ -345,12 +381,17 @@ module Interface
 	    draw_part_of_bar (prod_distribution_rocket_user, ACTUAL_BEGIN + 20, tot_h, alloc_agg, parts_passed, prod_distribution_rocket_y)
 	end if
 	Draw.Box (ACTUAL_BEGIN + 19, ALLOC_BEGIN + 1, ACTUAL_BEGIN + 31, ALLOC_BEGIN - ALLOC_HEIGHT - 1, 23)
+	if mouse_on_alloc_bar then
+	    Draw.Box (ACTUAL_BEGIN + 18, ALLOC_BEGIN + 2, ACTUAL_BEGIN + 32, ALLOC_BEGIN - ALLOC_HEIGHT - 2, white)
+	end if
 
 	update_item_list
 	var moved : boolean := false
-	var db : int := min (50, floor (ALLOC_HEIGHT / num_parts))
+	var db : int := min (50, floor (ALLOC_HEIGHT / (num_parts+2)))
 	^ (prod_dist_ys (num_parts)) := max ( ^ (prod_dist_ys (num_parts)), db)
+	var n : int := 0
 	loop
+	    n += 1
 	    for i : 1 .. num_parts - 2
 		if ^ (prod_dist_ys (i)) - db < ^ (prod_dist_ys (i + 1)) then
 		    ^ (prod_dist_ys (i + 1)) := ^ (prod_dist_ys (i)) - db
@@ -364,6 +405,7 @@ module Interface
 		end if
 	    end for
 	    exit when moved = false
+	    exit when n > 100
 	    moved := false
 	end loop
 
@@ -467,5 +509,80 @@ module Interface
 	    Draw.FillBox (cur_x + 61, prod_distribution_rocket_y - 22, dmmy, prod_distribution_rocket_y - 19, brightgreen)
 	    Font.Draw (intstr (ceil (prod_until_rocket), 1) + " left", cur_x + 60, prod_distribution_rocket_y - 37, font, black)
 	end if
+	if prod_dist_selectable (mouse_over_item) then
+	    Draw.Box (cur_x, ^ (prod_dist_ys (mouse_over_item)), cur_x + 50, ^ (prod_dist_ys (mouse_over_item)) - 50, white)
+	end if
+	if prod_dist_selectable (mouse_item_selected) then
+	    Draw.Box (cur_x, ^ (prod_dist_ys (mouse_item_selected)), cur_x + 50, ^ (prod_dist_ys (mouse_item_selected)) - 50, black)
+	end if
     end draw_interface
+
+    proc handle_input
+	if electricity_production > electricity_consumption then
+	    prod_distribution_electricity_user := 0
+	else
+	    prod_distribution_electricity_user := 1
+	end if
+	for i : 1 .. RESEARCH_NUM
+	    if research_enabled (i) then
+		prod_distribution_research_user (i) := 0.1
+	    else
+		prod_distribution_research_user (i) := 0.0
+	    end if
+	end for
+
+	var motion : string
+	var x, y, bn, bud : int
+	var bp : boolean
+	loop
+	    motion := "down"
+	    bp := Mouse.ButtonMoved (motion)
+	    if not bp then
+		motion := "up"
+		bp := Mouse.ButtonMoved (motion)
+	    end if
+	    exit when bp = false
+	    Mouse.ButtonWait (motion, x, y, bn, bud)
+
+	    if bn = LEFT and bud = RELEASED then
+		mouse_item_selected := 0
+	    end if
+
+	    if (bn = LEFT and bud = PRESSED and x > ACTUAL_BEGIN + 15 and x < ACTUAL_BEGIN + 35 and y < ALLOC_BEGIN + 5 and y > ALLOC_BEGIN - ALLOC_HEIGHT - 5) then
+		alloc_bar_selected := y
+	    else
+		alloc_bar_selected := 0
+	    end if
+
+	    mouse_item_selected := 1
+	    if bn = LEFT then
+		for i : 1 .. prod_dist_ys_count
+		    if (x > ACTUAL_BEGIN + 50 and x < ACTUAL_BEGIN + 100 and y > ^ (prod_dist_ys (i)) - 50 and y < ^ (prod_dist_ys (i))) then
+			mouse_item_selected := i
+			exit
+		    end if
+		end for
+	    end if
+	end loop
+
+	Mouse.Where (x, y, bn)
+	if (x > ACTUAL_BEGIN + 15 and x < ACTUAL_BEGIN + 35 and y < ALLOC_BEGIN + 5 and y > ALLOC_BEGIN - ALLOC_HEIGHT - 5) then
+	    mouse_on_alloc_bar := true
+	else
+	    mouse_on_alloc_bar := false
+	end if
+
+	mouse_over_item := 1
+	for i : 1 .. prod_dist_ys_count
+	    if (x > ACTUAL_BEGIN + 50 and x < ACTUAL_BEGIN + 100 and y > ^ (prod_dist_ys (i)) - 50 and y < ^ (prod_dist_ys (i))) then
+		mouse_over_item := i
+		exit
+	    end if
+	end for
+
+	if alloc_bar_selected > 0 then
+
+	end if
+
+    end handle_input
 end Interface
