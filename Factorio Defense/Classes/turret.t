@@ -94,9 +94,11 @@ class Turret
 	proj_queue (next_proj_queue).p_type := proj_turrets (v.e_type)
 	proj_queue (next_proj_queue).loc := v.loc
 	proj_queue (next_proj_queue).state := ALIVE
+	
+	proj_queue (next_proj_queue).dmg := real_damage (proj_damage (proj_turrets (v.e_type)), proj_damage_type (proj_turrets (v.e_type)), armor_enemies (u -> e_type)
 
-	damage_dealt += proj_damage (proj_turrets (v.e_type))
-	u -> effective_health -= proj_damage (proj_turrets (v.e_type))
+	damage_dealt += proj_queue (next_proj_queue).dmg
+	u -> effective_health -= proj_queue (next_proj_queue).dmg
 	if u -> effective_health <= 0 then
 	    kills += 1
 	end if
