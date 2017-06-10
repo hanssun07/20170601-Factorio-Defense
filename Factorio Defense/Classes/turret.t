@@ -63,7 +63,14 @@ class Turret
 	end if
 	var dsc_x : int := round ((v.loc.x - 0.5) * PIXELS_PER_GRID)
 	var dsc_y : int := round ((v.loc.y - 0.5) * PIXELS_PER_GRID)
-	Draw.FillOval (dsc_x, dsc_y, PIXELS_PER_GRID, PIXELS_PER_GRID, green)
+	Draw.FillOval (dsc_x, dsc_y, PIXELS_PER_GRID, PIXELS_PER_GRID, colors_turrets(v.e_type))
+    
+	if v.health < max_healths_turrets(v.e_type) then
+	    dsc_x -= PIXELS_PER_GRID
+	    dsc_y -= PIXELS_PER_GRID - 1
+	    Draw.Line (dsc_x, dsc_y, floor (2*PIXELS_PER_GRID * v.health / max_healths_turrets(v.e_type))+dsc_x, dsc_y, brightgreen)
+	    Draw.Line (floor (2*PIXELS_PER_GRID * v.health / max_healths_turrets(v.e_type))+dsc_x, dsc_y, 2*PIXELS_PER_GRID+dsc_x, dsc_y, brightred)
+	end if
     end draw
 
     body proc request_new_target ()

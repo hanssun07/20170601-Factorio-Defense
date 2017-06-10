@@ -374,7 +374,7 @@ proc path_map ()
 		    end if
 		    nn.weight += map_deaths (i) (j) * 0.2
 		    nn.weight += Rand.Real () * 0.001
-		    nn.weight += map (i) (j) -> effective_health * 0.2
+		    nn.weight += map (i) (j) -> effective_health * 0.5
 		    %check if new attempt is shortest; if so, add to heap
 		    if map_weights (i) (j) > nn.weight then
 			map_mov (0) (i) (j) := make_v (cn.x - i, cn.y - j)
@@ -413,7 +413,7 @@ proc path_map ()
 		    end if
 		    nn.weight += map_deaths (i) (j) * 0.4
 		    nn.weight += Rand.Real () * 0.001
-		    nn.weight += map (i) (j) -> effective_health * 0.2
+		    nn.weight += map (i) (j) -> effective_health * 1
 		    %check if new attempt is shortest; if so, add to heap
 		    if map_weights (i) (j) > nn.weight then
 			map_mov (1) (i) (j) := make_v (cn.x - i, cn.y - j)
@@ -447,15 +447,6 @@ proc draw_map ()
     for i : 1 .. MAP_HEIGHT - 1
 	Draw.Line (1, PIXELS_PER_GRID * i, MAP_WIDTH * PIXELS_PER_GRID, PIXELS_PER_GRID * i, gl)
     end for
-    for i : 1 .. 0 %MAP_WIDTH
-	for j : 1 .. MAP_HEIGHT
-	    Draw.Line (round ((i - 0.5) * PIXELS_PER_GRID),
-		round ((j - 0.5) * PIXELS_PER_GRID),
-		round ((i - 0.5 + map_mov (0) (i) (j).x * 0.5) * PIXELS_PER_GRID),
-		round ((j - 0.5 + map_mov (0) (i) (j).y * 0.5) * PIXELS_PER_GRID),
-		brightblue)
-	end for
-    end for
     for i : MAP_B_W_L .. MAP_B_W_U
 	for j : MAP_B_H_L .. MAP_B_H_U
 	    if map (i) (j) -> class_type = WALL then
@@ -465,6 +456,15 @@ proc draw_map ()
 		    Draw.Line (ceil ((i - 1 + map (i) (j) -> health / 350) * PIXELS_PER_GRID), (j - 1) * PIXELS_PER_GRID, ((i) * PIXELS_PER_GRID), (j - 1) * PIXELS_PER_GRID, brightred)
 		end if
 	    end if
+	end for
+    end for
+    for i : 1 .. 0%MAP_WIDTH
+	for j : 1 .. MAP_HEIGHT
+	    Draw.Line (round ((i - 0.5) * PIXELS_PER_GRID),
+		round ((j - 0.5) * PIXELS_PER_GRID),
+		round ((i - 0.5 + map_mov (0) (i) (j).x * 0.5) * PIXELS_PER_GRID),
+		round ((j - 0.5 + map_mov (0) (i) (j).y * 0.5) * PIXELS_PER_GRID),
+		brightblue)
 	end for
     end for
 end draw_map

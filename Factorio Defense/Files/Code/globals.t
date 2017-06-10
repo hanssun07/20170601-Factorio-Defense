@@ -25,7 +25,7 @@ module Constants
     const ENEMY_T_NUM : int := 8
     const PROJ_NUM : int := 100
     const TURRET_NUM : int := 100
-    const ENEMY_NUM : int := 5
+    const ENEMY_NUM : int := 50
     const PROJ_QUEUE_NUM : int := (TURRET_NUM + ENEMY_NUM) div 2
     
     const ENEMY_MVT_TILES_PER_SEC : real := 0.16
@@ -60,7 +60,7 @@ module Global_Vars
     var armor_turrets : array 1 .. TURRET_T_NUM of array 1 .. DAMAGE_TYPES of int
     var range_turrets : array 1 .. TURRET_T_NUM of real
     var proj_turrets : array 1..TURRET_T_NUM of int
-    var cost_turrets : array 1..TURRET_T_NUM of int
+    var colors_turrets : array 1..TURRET_T_NUM of int := init(6,2,4)
     
     var enemy_names : array 1 .. ENEMY_T_NUM of string
     var max_healths_enemies : array 1 .. ENEMY_T_NUM of int

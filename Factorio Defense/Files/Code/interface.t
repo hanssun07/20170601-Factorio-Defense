@@ -648,6 +648,26 @@ module Interface
 			end if
 		    end if
 		end if
+	    elsif mouse_item_selected = 4 then
+		if bn mod 10 = 1 then
+		    if map (mx) (my) -> class_type = TURRET then
+			for i : 1 .. 50
+			    exit when map (mx) (my) -> health >= max_healths_turrets (map (mx) (my) -> e_type)
+			    exit when num_repair_available <= 0.01
+			    map (mx) (my) -> health += 1
+			    map (mx) (my) -> effective_health += 1
+			    num_repair_available -= 0.01
+			end for
+		    elsif map (mx) (my) -> class_type = WALL then
+			for i : 1 .. 50
+			    exit when map (mx) (my) -> health >= 350
+			    exit when num_repair_available <= 0.01
+			    map (mx) (my) -> health += 1
+			    map (mx) (my) -> effective_health += 1
+			    num_repair_available -= 0.01
+			end for
+		    end if
+		end if
 	    end if
 	end if
 

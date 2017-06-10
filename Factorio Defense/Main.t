@@ -55,8 +55,10 @@ loop
 	update_map
 	draw_map
 	% update all turrets
+	if turrets(1)->v.health <= 0 then
 	turrets (1) -> v.effective_health := 1000
 	turrets (1) -> v.health := 1000
+	end if
 	turrets (1) -> update
 	turrets (1) -> draw
 	% update all enemies
@@ -85,8 +87,8 @@ loop
 	%e -> draw
 	%e -> update (e -> v)
 
-	for i : 1 .. Rand.Int (1, 1)
-	    spawn_enemy (Rand.Int (1, 4) + Rand.Int (0, 1) * 4)
+	for i : 1 .. Rand.Int (5, 5)
+	    spawn_enemy (Rand.Int (4, 4) + Rand.Int (0, 0) * 4)
 	end for
 	if Rand.Real () <= 0.00 then
 	    for i : 1 .. MAP_WIDTH

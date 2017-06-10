@@ -206,6 +206,6 @@ module Class_Vars
     end unlock_sem
     
     fcn real_damage(damage, dt : int, armor : array 1..DAMAGE_TYPES of int) : int
-	result floor(damage*0.01*(100-armor(dt)) + Rand.Real())
+	result max(floor(damage*0.01*(100-armor(dt)) + Rand.Real()),1)
     end real_damage
 end Class_Vars

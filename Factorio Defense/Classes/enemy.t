@@ -36,7 +36,7 @@ class Enemy
 	    map_deaths (floor (v.loc.x)) (floor (v.loc.y)) += 1
 	    return
 	end if
-	if v.cur_target not= nil and Rand.Real > 0.01 then
+	if v.cur_target not= nil then %and Rand.Real > 0.01 then
 	    if v.cur_target -> state = DEAD then
 		request_new_target ()
 	    elsif v.cur_target -> effective_health <= 0 then
@@ -138,6 +138,13 @@ class Enemy
 	var dsc_x : int := round ((v.loc.x - 0.5) * PIXELS_PER_GRID)
 	var dsc_y : int := round ((v.loc.y - 0.5) * PIXELS_PER_GRID)
 	Draw.FillBox (dsc_x - 5, dsc_y - 5, dsc_x + 5, dsc_y + 5, brightred)
+
+	if v.health < max_healths_enemies(v.e_type) then
+	    dsc_x -= floor(PIXELS_PER_GRID/2)
+	    dsc_y -= 7
+	    Draw.Line (dsc_x, dsc_y, floor (PIXELS_PER_GRID * v.health / max_healths_enemies(v.e_type))+dsc_x, dsc_y, brightgreen)
+	    Draw.Line (floor (PIXELS_PER_GRID * v.health / max_healths_enemies(v.e_type))+dsc_x, dsc_y, PIXELS_PER_GRID+dsc_x, dsc_y, brightred)
+	end if
     end draw
 
     body proc request_new_target ()
@@ -163,13 +170,13 @@ class Enemy
 	proj_queue (next_proj_queue).p_type := proj_enemies (v.e_type)
 	proj_queue (next_proj_queue).loc := v.loc
 	proj_queue (next_proj_queue).state := ALIVE
-	
+
 	if u -> class_type = TURRET then
 	    proj_queue (next_proj_queue).dmg := real_damage (proj_damage (proj_enemies (v.e_type)), proj_dmg_type (proj_enemies (v.e_type)), armor_turrets (u -> e_type))
 	else
 	    proj_queue (next_proj_queue).dmg := real_damage (proj_damage (proj_enemies (v.e_type)), proj_dmg_type (proj_enemies (v.e_type)), armor_wall)
 	end if
-	u->effective_health -= proj_queue (next_proj_queue).dmg
+	u -> effective_health -= proj_queue (next_proj_queue).dmg
 
 	next_proj_queue := (next_proj_queue mod PROJ_QUEUE_NUM) + 1
 	num_proj_queue += 1
