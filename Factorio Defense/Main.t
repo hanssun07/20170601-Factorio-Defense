@@ -85,7 +85,7 @@ loop
 	%e -> update (e -> v)
 
 	for i : 1 .. Rand.Int (1, 1)
-	    spawn_enemy (Rand.Int (1, 1) + Rand.Int (0, 1) * 4)
+	    spawn_enemy (Rand.Int (1, 4) + Rand.Int (0, 1) * 4)
 	end for
 	if Rand.Real () <= 0.00 then
 	    for i : 1 .. MAP_WIDTH

@@ -25,7 +25,7 @@ module Constants
     const ENEMY_T_NUM : int := 8
     const PROJ_NUM : int := 100
     const TURRET_NUM : int := 100
-    const ENEMY_NUM : int := 5
+    const ENEMY_NUM : int := 50
     const PROJ_QUEUE_NUM : int := (TURRET_NUM + ENEMY_NUM) div 2
     
     const ENEMY_MVT_TILES_PER_SEC : real := 0.16
@@ -50,6 +50,8 @@ module Global_Vars
     var proj_speed : array 1 .. PROJ_T_NUM of real
     var proj_sprite : array 1 .. PROJ_T_NUM of int
     var proj_dmg_type : array 1 .. PROJ_T_NUM of int
+    
+    var armor_wall : array 1..DAMAGE_TYPES of int := init{30,100,0,0}
 
     var turret_names : array 1 .. TURRET_T_NUM of string
     var proj_names : array 1..TURRET_T_NUM of string
@@ -176,6 +178,9 @@ module Sidebar
     var prod_dist_ys_count : int
     var prod_dist_ys : array 1..50 of unchecked ^int
     var prod_dist_selectable : array 1..50 of boolean
+    var prod_dist_allocs : array 1..50 of unchecked ^real
+    var prod_dist_allocs_agg : array 0..50 of real
+    var prod_dist_allocs_ys  : array 1..50 of int
     
     var font : int
     
@@ -199,6 +204,9 @@ module Sidebar
     var alloc_bar_selected : int := 0
     var mouse_over_item : int := 1
     var mouse_item_selected : int := 1
+    var bar_s_x : int
+    var bar_s_y : int
+    var pd_at_selection : real
     
 end Sidebar
 

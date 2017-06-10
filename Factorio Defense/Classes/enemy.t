@@ -163,8 +163,12 @@ class Enemy
 	proj_queue (next_proj_queue).p_type := proj_enemies (v.e_type)
 	proj_queue (next_proj_queue).loc := v.loc
 	proj_queue (next_proj_queue).state := ALIVE
-
-	u -> effective_health -= proj_damage (proj_enemies (v.e_type))
+	
+	if u->e_type = TURRET then
+	u -> effective_health -= real_damage(proj_damage (proj_enemies (v.e_type)), proj_damage_type(proj_enemies(v.e_type)), armor_turrets(u->e_type)
+	else
+	u -> effective_health -= real_damage(proj_damage (proj_enemies (v.e_type)), proj_damage_type(proj_enemies(v.e_type)), armor_wall
+	end if
 
 	next_proj_queue := (next_proj_queue mod PROJ_QUEUE_NUM) + 1
 	num_proj_queue += 1
