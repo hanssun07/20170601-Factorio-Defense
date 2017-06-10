@@ -97,8 +97,6 @@ proc read_data ()
 	prod_per_research(i) := prod_until_research_done(i)
 	get : f, skip, research_effect(i) : *
 	get : f, skip, research_effect_2(i) : *
-	put research_effect(i)
-	put research_effect_2(i)
 	for j : 1..RESEARCH_NUM
 	    get : f, skip, tmp
 	    if tmp = 1 then
@@ -607,35 +605,6 @@ proc resolve_targets
 	    else
 		turrets (t) -> v.cur_target := u
 	    end if
-
-	    locate (2, 102)
-	    put v.cooldown
-	    locate (3, 102)
-	    if v.cur_target = nil then
-		put "nil"
-	    else
-		put v.cur_target -> ind
-		locate (4, 102)
-		put v_to_string (v.cur_target -> loc)
-		locate (5, 102)
-		put v.cur_target -> effective_health
-		locate (6, 102)
-		put v.cur_target -> health
-	    end if
-	    locate (1, 112)
-	    put num_projectiles : 10
-	    locate (7, 102)
-	    put shortest
-	    locate (8, 102)
-	    put range_turrets (v.e_type) ** 2
-	    locate (9, 102)
-	    put floor (max (1, (v.loc.x - range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1))
-	    locate (10, 102)
-	    put floor (min (MAP_M_WID, (v.loc.x + range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1))
-	    locate (11, 102)
-	    put floor (max (1, (v.loc.y - range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1))
-	    locate (12, 102)
-	    put floor (min (MAP_M_HEI, (v.loc.y + range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1))
 
 	    turret_on_standby (t) := false
 	    turrets_on_standby -= 1
