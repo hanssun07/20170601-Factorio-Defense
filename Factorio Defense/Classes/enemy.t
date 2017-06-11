@@ -64,11 +64,26 @@ class Enemy
 		v.state := NONEXISTENT
 		enemies_through += 1
 		unlock_sem (floor ((v.loc.x - 1) / MAP_M_SIZ) + 1, floor ((v.loc.y - 1) / MAP_M_SIZ) + 1, addr (v))
+		return
 	    else
 		request_new_target ()
 	    end if
 	end if
-
+	if map_handler (floor (dl.x)) (floor (dl.y)).class_type = FIRE then
+	    var s : int := real_damage (floor (Rand.Real () + 3 * ln (map_handler (floor (dl.x)) (floor (dl.y)).health)),
+		3, armor_enemies (v.e_type))
+	    v.health -= s
+	    v.effective_health -= s
+	end if
+	
+	locate (1,1)
+	put v_to_string(v.loc)
+	put v_to_string(dl)
+	put floor ((v.loc.x - 1) / MAP_M_SIZ) + 1, ", ", floor ((v.loc.y - 1) / MAP_M_SIZ) + 1
+	put map_meta_sem(floor ((v.loc.x - 1) / MAP_M_SIZ) + 1)(floor ((v.loc.y - 1) / MAP_M_SIZ) + 1)
+	put turrets_on_standby
+	put v.effective_health
+	
 	v.cooldown -= 1
     end update
 
@@ -139,11 +154,11 @@ class Enemy
 	var dsc_y : int := round ((v.loc.y - 0.5) * PIXELS_PER_GRID)
 	Draw.FillBox (dsc_x - 5, dsc_y - 5, dsc_x + 5, dsc_y + 5, brightred)
 
-	if v.health < max_healths_enemies(v.e_type) then
-	    dsc_x -= floor(PIXELS_PER_GRID/2)
+	if v.health < max_healths_enemies (v.e_type) then
+	    dsc_x -= floor (PIXELS_PER_GRID / 2)
 	    dsc_y -= 7
-	    Draw.Line (dsc_x, dsc_y, floor (PIXELS_PER_GRID * v.health / max_healths_enemies(v.e_type))+dsc_x, dsc_y, brightgreen)
-	    Draw.Line (floor (PIXELS_PER_GRID * v.health / max_healths_enemies(v.e_type))+dsc_x, dsc_y, PIXELS_PER_GRID+dsc_x, dsc_y, brightred)
+	    Draw.Line (dsc_x, dsc_y, floor (PIXELS_PER_GRID * v.health / max_healths_enemies (v.e_type)) + dsc_x, dsc_y, brightgreen)
+	    Draw.Line (floor (PIXELS_PER_GRID * v.health / max_healths_enemies (v.e_type)) + dsc_x, dsc_y, PIXELS_PER_GRID + dsc_x, dsc_y, brightred)
 	end if
     end draw
 

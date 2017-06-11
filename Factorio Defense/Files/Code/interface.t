@@ -1,11 +1,10 @@
 module Interface
-    import Mouse
+    import Mouse, spawn_turret_from_topleft
     export var pervasive unqualified all
 
 
     forward proc apply_research_effects (rid : int)
     forward proc apply_effect (effect : string)
-    forward proc check_research_prereqs ()
 
     proc move_towards (var f : real, t, r : real)
 	f += (t - f) * r
@@ -190,26 +189,6 @@ module Interface
 	end if
     end int_tick
 
-    body proc check_research_prereqs ()
-	var prereqs : boolean := false
-	for i : 1 .. RESEARCH_NUM
-	    prereqs := false
-	    %only check if research in question isn't done
-	    if prod_until_research_done (i) > 0 then
-		prereqs := true
-		%check the prereqs and mark false if one isn't met
-		for j : 1 .. RESEARCH_NUM
-		    if research_prereq (i) (j) and prod_until_research_done (j) > 0 then
-			prereqs := false
-		    end if
-		end for
-	    end if
-	    %if all prereqs are met, enable
-	    if prereqs then
-		research_enabled (i) := true
-	    end if
-	end for
-    end check_research_prereqs
 
     body proc apply_research_effects (rid : int)
 	apply_effect (research_effect (rid))
@@ -538,20 +517,6 @@ module Interface
     end draw_interface
 
     proc handle_input
-	/*
-	 if electricity_production > electricity_consumption then
-	 prod_distribution_electricity_user := 0
-	 else
-	 prod_distribution_electricity_user := 1
-	 end if
-	 for i : 1 .. RESEARCH_NUM
-	 if research_enabled (i) then
-	 prod_distribution_research_user (i) := 0.1
-	 else
-	 prod_distribution_research_user (i) := 0.0
-	 end if
-	 end for*/
-
 	var motion : string
 	var x, y, bn, bud : int
 	var bp : boolean
@@ -595,6 +560,16 @@ module Interface
 	    end if
 	end loop
 
+	var c : string (1)
+	if hasch () then
+	    getch (c)
+	    if c = "w" or c = "W" then
+		mouse_item_selected := 5
+	    elsif c = "r" or c = "R" then
+		mouse_item_selected := 4
+	    end if
+	end if
+
 	Mouse.Where (x, y, bn)
 	if (x > ACTUAL_BEGIN + 15 and x < ACTUAL_BEGIN + 35 and y < ALLOC_BEGIN + 5 and y > ALLOC_BEGIN - ALLOC_HEIGHT - 5) then
 	    mouse_on_alloc_bar := true
@@ -619,7 +594,7 @@ module Interface
 	    ^ (prod_dist_allocs (alloc_bar_selected)) := min (1, max (0, (x - part) / 200))
 	end if
 
-	if x < INTFC_BEGIN then
+	if x < INTFC_BEGIN and x > 0 and y > 0 and y < MAP_HEIGHT * PIXELS_PER_GRID then
 	    var mx : int := x div PIXELS_PER_GRID + 1
 	    var my : int := y div PIXELS_PER_GRID + 1
 	    if mouse_item_selected = 5 then
@@ -668,8 +643,44 @@ module Interface
 			end for
 		    end if
 		end if
+	    else
+		for i : 1 .. TURRET_T_NUM
+		    if mouse_item_selected = selection_num_turrets (i) then
+			if mx >= MAP_B_W_L and mx < MAP_B_W_U and my > MAP_B_H_L and my <= MAP_B_H_U then
+			    bp := true
+			    for j : max (1, (mx - 1) div MAP_M_SIZ + 1) .. min (MAP_M_WID, mx div MAP_M_SIZ + 1)
+				for k : max (1, (my - 2) div MAP_M_SIZ + 1) .. min (MAP_M_HEI, (my - 1) div MAP_M_SIZ + 1)
+				    if map_meta_sem (j) (k) <= 0 then
+					bp := false
+				    end if
+				end for
+			    end for
+			    if map (mx) (my) -> class_type < TURRET and
+				    map (mx + 1) (my) -> class_type < TURRET and
+				    map (mx) (my - 1) -> class_type < TURRET and
+				    map (mx + 1) (my - 1) -> class_type < TURRET and bp then
+				if bn mod 10 = 1 and can_build_turrets then
+				    spawn_turret_from_topleft (mx, my, i)
+				else
+				    Draw.FillOval (mx * PIXELS_PER_GRID, (my - 1) * PIXELS_PER_GRID, PIXELS_PER_GRID - 2, PIXELS_PER_GRID - 2, green)
+				end if
+			    else
+				Draw.FillOval (mx * PIXELS_PER_GRID, (my - 1) * PIXELS_PER_GRID, PIXELS_PER_GRID - 2, PIXELS_PER_GRID - 2, red)
+			    end if
+			else
+			    Draw.FillOval (mx * PIXELS_PER_GRID, (my - 1) * PIXELS_PER_GRID, PIXELS_PER_GRID - 2, PIXELS_PER_GRID - 2, red)
+			end if
+			exit
+		    end if
+		end for
+	    end if
+	    
+	    if bn div 100 = 1 then
+		if map(mx)(my)->class_type not= FIRE then
+		    map(mx)(my)->health := 0
+		    map(mx)(my)->effective_health := 0
+		end if
 	    end if
 	end if
-
     end handle_input
 end Interface

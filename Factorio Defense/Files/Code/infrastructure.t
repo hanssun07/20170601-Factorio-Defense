@@ -208,4 +208,26 @@ module Class_Vars
     fcn real_damage(damage, dt : int, armor : array 1..DAMAGE_TYPES of int) : int
 	result max(floor(damage*0.01*(100-armor(dt)) + Rand.Real()),1)
     end real_damage
+    
+    
+    proc check_research_prereqs ()
+	var prereqs : boolean := false
+	for i : 1 .. RESEARCH_NUM
+	    prereqs := false
+	    %only check if research in question isn't done
+	    if prod_until_research_done (i) > 0 then
+		prereqs := true
+		%check the prereqs and mark false if one isn't met
+		for j : 1 .. RESEARCH_NUM
+		    if research_prereq (i) (j) and prod_until_research_done (j) > 0 then
+			prereqs := false
+		    end if
+		end for
+	    end if
+	    %if all prereqs are met, enable
+	    if prereqs then
+		research_enabled (i) := true
+	    end if
+	end for
+    end check_research_prereqs
 end Class_Vars

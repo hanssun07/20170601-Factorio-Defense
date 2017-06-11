@@ -20,31 +20,9 @@ loop
     % display and handle menu screen
     % initialize game
     begin_init
-
-    %for k : 1 .. 50
-    %    for i : 1 .. 50
-    %        map_deaths (i) (k) := sin(i/5) + cos(k/5)*2%*Rand.Real()*50
-    %    end for
-    %end for
     path_map
-    range_enemies (1) := 1
-
-    turrets (1) -> initialize (1, 3, make_v (25.5, 3.5))
-    last_turret += 1
-    num_turrets += 1
-    var garbage : boolean
-    var t : int := 0
-    for i : floor (max (1, (25.5 - 1.5) / MAP_M_SIZ + 1)) .. floor (min (MAP_M_WID, (25.5 - 0.5) / MAP_M_SIZ) + 1)
-	for j : floor (max (1, (3.5 - 1.5) / MAP_M_SIZ + 1)) .. floor (min (MAP_M_HEI, (3.5 - 0.5) / MAP_M_SIZ) + 1)
-	    garbage := lock_sem (i, j, addr (turrets (1) -> v))
-	end for
-    end for
-    for i : 25 .. 26
-	for j : 3 .. 4
-	    cheat (addressint, map (i) (j)) := addr (turrets (1) -> v)
-	end for
-    end for
-    reload_turrets (3) := 0
+    
+    turret_enabled(2) := true
 
     var tick : int
     loop
@@ -55,12 +33,10 @@ loop
 	update_map
 	draw_map
 	% update all turrets
-	if turrets(1)->v.health <= 0 then
-	turrets (1) -> v.effective_health := 1000
-	turrets (1) -> v.health := 1000
-	end if
-	turrets (1) -> update
-	turrets (1) -> draw
+	for i : 1 .. last_turret
+	    turrets (i) -> update
+	    turrets (i) -> draw
+	end for
 	% update all enemies
 	for i : 1 .. ENEMY_NUM
 	    enemies (i) -> pre_update
@@ -78,17 +54,17 @@ loop
 	% do cleanups
 	resolve_enemies
 	resolve_projectiles
-	if num_enemies <= 0 and last_turret not= num_turrets then
-	    resolve_turrets
-	end if
+	%if last_turret not= num_turrets then
+	%    resolve_turrets
+	%end if
 	resolve_targets
 	% check for win/lose-condition
 
 	%e -> draw
 	%e -> update (e -> v)
 
-	for i : 1 .. Rand.Int (5, 5)
-	    spawn_enemy (Rand.Int (4, 4) + Rand.Int (0, 0) * 4)
+	for i : 1 .. Rand.Int (-5, 1)
+	    spawn_enemy (Rand.Int (1, 4) + Rand.Int (0, 1) * 4)
 	end for
 	if Rand.Real () <= 0.00 then
 	    for i : 1 .. MAP_WIDTH
@@ -122,19 +98,12 @@ loop
 	View.Update
 	%exit when e -> v.state = NONEXISTENT
 
-	if false then
-	    t := (t + 1) mod 360
-	    Draw.Line (810, 400 - t, 810 + Time.Elapsed - tick, 400 - t, black)
-	    Draw.Line (810, 400 - (t + 1) mod 360, 910, 400 - (t + 1) mod 360, white)
-	    Draw.Dot (810 + 16, 400 - (t + 1) mod 360, brightred)
-	end if
-	
 	ticks_to_repath -= 1
 	if ticks_to_repath <= 0 then
 	    ticks_to_repath += 600
 	    path_map
 	end if
-	
+
 	ticks_passed += 1
 	delay (16 - Time.Elapsed + tick)
     end loop
