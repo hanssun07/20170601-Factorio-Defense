@@ -40,11 +40,11 @@ proc startup_init ()
 	proj_sprite (i) := 0
 	proj_dmg_type (i) := 0
     end for
-    
-    font := Font.New("serif:12")
-    PROD_STR_WIDTH := max(Font.Width("Production: ", font), Font.Width("Electricity Stored: ", font))
-    NMRL_STR_WIDTH := Font.Width("0", font)
-    
+
+    font := Font.New ("serif:12")
+    PROD_STR_WIDTH := max (Font.Width ("Production: ", font), Font.Width ("Electricity Stored: ", font))
+    NMRL_STR_WIDTH := Font.Width ("0", font)
+
     Mouse.ButtonChoose ("multibutton")
 end startup_init
 
@@ -68,9 +68,9 @@ proc read_data ()
 	get : f, range_turrets (i)
 	get : f, proj_turrets (i)
 	get : f, prod_per_turret (i)
-	prod_until_next_turret(i) := prod_per_turret(i)
-	get : f, prod_per_proj(i)
-	prod_until_next_proj(i) := prod_per_proj(i)
+	prod_until_next_turret (i) := prod_per_turret (i)
+	get : f, prod_per_proj (i)
+	prod_until_next_proj (i) := prod_per_proj (i)
 	for j : 1 .. DAMAGE_TYPES
 	    get : f, armor_turrets (i) (j)
 	end for
@@ -90,29 +90,27 @@ proc read_data ()
     end for
     close : f
     open : f, "Files\\Data\\research.txt", get
-    for i : 1..RESEARCH_NUM
-	exit when eof(f)
-	get : f, skip, research_name(i) : *
-	get : f, skip, prod_until_research_done(i)
-	prod_per_research(i) := prod_until_research_done(i)
-	get : f, skip, research_effect(i) : *
-	get : f, skip, research_effect_2(i) : *
-	put research_effect(i)
-	put research_effect_2(i)
-	for j : 1..RESEARCH_NUM
+    for i : 1 .. RESEARCH_NUM
+	exit when eof (f)
+	get : f, skip, research_name (i) : *
+	get : f, skip, prod_until_research_done (i)
+	prod_per_research (i) := prod_until_research_done (i)
+	get : f, skip, research_effect (i) : *
+	get : f, skip, research_effect_2 (i) : *
+	for j : 1 .. RESEARCH_NUM
 	    get : f, skip, tmp
 	    if tmp = 1 then
-		research_prereq(i)(j) := true
+		research_prereq (i) (j) := true
 	    else
-		research_prereq(i)(j) := false
+		research_prereq (i) (j) := false
 	    end if
 	end for
     end for
 end read_data
 
 proc begin_init ()
-    for i : MAP_B_W_L .. MAP_B_W_U
-	for j : MAP_B_H_L .. MAP_B_H_U
+    for i : 1 .. MAP_WIDTH
+	for j : 1 .. MAP_HEIGHT
 	    map_handler (i) (j) := make_ev (NONEXISTENT, 0, 0, 0, 0, FLOOR, make_v (i, j))
 	    cheat (addressint, map (i) (j)) := addr (map_handler (i) (j))
 	end for
@@ -141,7 +139,7 @@ proc begin_init ()
 	enemy_on_standby (i) := false
     end for
     for i : 1 .. PROJ_NUM
-	projectiles (i) -> initialize (0, FLOOR, make_v (0, 0))
+	projectiles (i) -> initialize (0, FLOOR, make_v (0, 0), 0)
 	projectiles (i) -> v.state := NONEXISTENT
     end for
     turrets_on_standby := 0
@@ -155,63 +153,63 @@ proc begin_init ()
     can_fire := true
     enemies_through := 0
     chunks_avail_for_spawn := MAP_M_WID + MAP_M_HEI * 2 - 2
-    
+
     prod_avail := 0
-    prod_per_tick := 10000/60
+    prod_per_tick := 1000 / 60
     ticks_to_next_prod := 6
     ticks_per_prod := 6
     prod_distribution_prod := 1
     prod_distribution_prod_user := 1
-    
+
     electricity_production := 0
     electricity_consumption := 0
     electricity_storage := 0.001
     electricity_stored := 0
     prod_until_next_e_storage := 1000.0
-    prod_distribution_electricity := 0.0
-    prod_distribution_electricity_user := 0.0
-    prod_distribution_electricity_storage := 0.0
-    prod_distribution_electricity_storage_user := 0.0
-    
+    prod_distribution_electricity := 0.0001
+    prod_distribution_electricity_user := 0.0001
+    prod_distribution_electricity_storage := 0.0001
+    prod_distribution_electricity_storage_user := 0.0001
+
     prod_until_next_repair := 10.0
     prod_per_repair := 10.0
     num_repair_available := 1.0
-    prod_distribution_repair := 0.0
-    prod_distribution_repair_user := 0.0
-    
+    prod_distribution_repair := 0.0001
+    prod_distribution_repair_user := 0.0001
+
     prod_until_next_wall := 240.0
     prod_per_wall := 240.0
     num_wall_avail := 20
-    prod_distribution_wall := 0.0
-    prod_distribution_wall_user := 0.0
-    
+    prod_distribution_wall := 0.0001
+    prod_distribution_wall_user := 0.0001
+
     prod_until_rocket := 1000000.0  %one million
     rocket_enabled := false
     prod_distribution_rocket := 0.0
     prod_distribution_rocket_user := 0.0
-    
-    for i : 1..TURRET_T_NUM
-	num_turrets_avail(i) := 0
-	num_proj_avail(i) := 0
-	turret_enabled(i) := false
-	prod_distribution_turrets(i) := 0.0
-	prod_distribution_turrets_user(i) := 0.0
-	prod_distribution_proj(i) := 0.0
-	prod_distribution_proj_user(i) := 0.0
+
+    for i : 1 .. TURRET_T_NUM
+	num_turrets_avail (i) := 0
+	num_proj_avail (i) := 0
+	turret_enabled (i) := false
+	prod_distribution_turrets (i) := 0.0
+	prod_distribution_turrets_user (i) := 0.0
+	prod_distribution_proj (i) := 0.0
+	prod_distribution_proj_user (i) := 0.0
     end for
-    
-    num_turrets_avail(1) := 1
-    num_proj_avail(1) := 100
-    turret_enabled(1) := true
-    
-    for i : 1..RESEARCH_NUM
-	research_enabled(i) := false
-	prod_distribution_research(i) := 0.0
-	prod_distribution_research_user(i) := 0.0
-	prod_until_research_done(i) := prod_per_research(i)
+
+    num_turrets_avail (1) := 1
+    num_proj_avail (1) := 100
+    turret_enabled (1) := true
+
+    for i : 1 .. RESEARCH_NUM
+	research_enabled (i) := false
+	prod_distribution_research (i) := 0.0
+	prod_distribution_research_user (i) := 0.0
+	prod_until_research_done (i) := prod_per_research (i)
     end for
-    
-    check_research_prereqs()
+
+    check_research_prereqs ()
 end begin_init
 
 proc resolve_projectiles ()
@@ -225,7 +223,8 @@ proc resolve_projectiles ()
 	    proj_queue (last_proj_queue).target,
 	% proj_queue (last_proj_queue).target_type,
 	    proj_queue (last_proj_queue).p_type,
-	    proj_queue (last_proj_queue).loc)
+	    proj_queue (last_proj_queue).loc,
+	    proj_queue (last_proj_queue).dmg)
 
 	next_projectile := (next_projectile mod PROJ_NUM) + 1
 	last_proj_queue := (last_proj_queue mod PROJ_QUEUE_NUM) + 1
@@ -375,9 +374,7 @@ proc path_map ()
 		    end if
 		    nn.weight += map_deaths (i) (j) * 0.2
 		    nn.weight += Rand.Real () * 0.001
-		    if MAP_B_W_L <= i and MAP_B_W_U >= i and MAP_B_H_L <= j and MAP_B_H_U >= j then
-			nn.weight += map (i) (j) -> effective_health * 0.2
-		    end if
+		    nn.weight += map (i) (j) -> effective_health * 0.5
 		    %check if new attempt is shortest; if so, add to heap
 		    if map_weights (i) (j) > nn.weight then
 			map_mov (0) (i) (j) := make_v (cn.x - i, cn.y - j)
@@ -416,9 +413,7 @@ proc path_map ()
 		    end if
 		    nn.weight += map_deaths (i) (j) * 0.4
 		    nn.weight += Rand.Real () * 0.001
-		    if MAP_B_W_L <= i and MAP_B_W_U >= i and MAP_B_H_L <= j and MAP_B_H_U >= j then
-			nn.weight += map (i) (j) -> effective_health * 0.2
-		    end if
+		    nn.weight += map (i) (j) -> effective_health * 1
 		    %check if new attempt is shortest; if so, add to heap
 		    if map_weights (i) (j) > nn.weight then
 			map_mov (1) (i) (j) := make_v (cn.x - i, cn.y - j)
@@ -452,7 +447,18 @@ proc draw_map ()
     for i : 1 .. MAP_HEIGHT - 1
 	Draw.Line (1, PIXELS_PER_GRID * i, MAP_WIDTH * PIXELS_PER_GRID, PIXELS_PER_GRID * i, gl)
     end for
-    for i : 1 .. 0 %MAP_WIDTH
+    for i : MAP_B_W_L .. MAP_B_W_U
+	for j : MAP_B_H_L .. MAP_B_H_U
+	    if map (i) (j) -> class_type = WALL then
+		Draw.FillBox ((i - 1) * PIXELS_PER_GRID, (j - 1) * PIXELS_PER_GRID, (i) * PIXELS_PER_GRID, (j) * PIXELS_PER_GRID, darkgrey)
+		if map (i) (j) -> health < 350 then
+		    Draw.Line ((i - 1) * PIXELS_PER_GRID, (j - 1) * PIXELS_PER_GRID, floor ((i - 1 + map (i) (j) -> health / 350) * PIXELS_PER_GRID), (j - 1) * PIXELS_PER_GRID, brightgreen)
+		    Draw.Line (ceil ((i - 1 + map (i) (j) -> health / 350) * PIXELS_PER_GRID), (j - 1) * PIXELS_PER_GRID, ((i) * PIXELS_PER_GRID), (j - 1) * PIXELS_PER_GRID, brightred)
+		end if
+	    end if
+	end for
+    end for
+    for i : 1 .. 0%MAP_WIDTH
 	for j : 1 .. MAP_HEIGHT
 	    Draw.Line (round ((i - 0.5) * PIXELS_PER_GRID),
 		round ((j - 0.5) * PIXELS_PER_GRID),
@@ -532,37 +538,55 @@ proc resolve_targets
 	    %easier on eyes
 	    v := enemies (e) -> v
 
-	    %initialize min-finder
-	    shortest := 4294967296.0
-
-	    %check in the appropriate chunks
-	    for i : floor (max (1, (v.loc.x - range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
-		    floor (min (MAP_M_WID, (v.loc.x + range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1))
-		for j : floor (max (1, (v.loc.y - range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
-			floor (min (MAP_M_HEI, (v.loc.y + range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1))
-		    check := map_meta_sem (i) (j)
-		    for k : 1 .. MAP_M_CAP
-			exit when check <= 0
-			if map_meta (i) (j) (k) not= nil then
-			    if map_meta (i) (j) (k) -> class_type >= TURRET and map_meta (i) (j) (k) -> effective_health > 0 then
-				%triple the effective distance if a wall
-				cur := distance_squared (map_meta (i) (j) (k) -> loc, v.loc) *
-				    map_meta (i) (j) (k) -> class_type
-				if cur < shortest then
-				    u := map_meta (i) (j) (k)
-				    shortest := cur
-				end if
-			    end if
-			    check -= 1
+	    var found : boolean := false
+	    for i : floor (max (MAP_B_W_L, v.loc.x - 1)) .. floor (min (MAP_B_W_U, v.loc.x + 1))
+		for j : floor (max (MAP_B_H_L, v.loc.y - 1)) .. floor (min (MAP_B_H_U, v.loc.y + 1))
+		    if map (i) (j) -> class_type = WALL then
+			if Math.Distance (i, j, v.loc.x, v.loc.y) < 0.7 then
+			    enemies(e)->v.cur_target := map (i) (j)
+			    found := true
+			    exit
 			end if
-		    end for
+		    end if
 		end for
+		exit when found
 	    end for
 
-	    if shortest >= 4294967295.0 or distance_squared (u -> loc, v.loc) > range_enemies (v.e_type) ** 2 then
-		enemies (e) -> v.cur_target := nil
-	    else
-		enemies (e) -> v.cur_target := u
+	    if not found then
+
+		%initialize min-finder
+		shortest := 4294967296.0
+
+		%check in the appropriate chunks
+		for i : floor (max (1, (v.loc.x - range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
+			floor (min (MAP_M_WID, (v.loc.x + range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1))
+		    for j : floor (max (1, (v.loc.y - range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
+			    floor (min (MAP_M_HEI, (v.loc.y + range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1))
+			check := map_meta_sem (i) (j)
+			for k : 1 .. MAP_M_CAP
+			    exit when check <= 0
+			    if map_meta (i) (j) (k) not= nil then
+				if map_meta (i) (j) (k) -> class_type >= TURRET and map_meta (i) (j) (k) -> effective_health > 0 then
+				    %triple the effective distance if a wall
+				    cur := distance_squared (map_meta (i) (j) (k) -> loc, v.loc) *
+					map_meta (i) (j) (k) -> class_type
+				    if cur < shortest then
+					u := map_meta (i) (j) (k)
+					shortest := cur
+				    end if
+				end if
+				check -= 1
+			    end if
+			end for
+		    end for
+		end for
+
+		if shortest >= 4294967295.0 or distance_squared (u -> loc, v.loc) > range_enemies (v.e_type) ** 2 then
+		    enemies (e) -> v.cur_target := nil
+		else
+		    enemies (e) -> v.cur_target := u
+		end if
+
 	    end if
 
 	    enemy_on_standby (e) := false
@@ -607,37 +631,27 @@ proc resolve_targets
 		turrets (t) -> v.cur_target := u
 	    end if
 
-	    locate (2, 102)
-	    put v.cooldown
-	    locate (3, 102)
-	    if v.cur_target = nil then
-		put "nil"
-	    else
-		put v.cur_target -> ind
-		locate (4, 102)
-		put v_to_string (v.cur_target -> loc)
-		locate (5, 102)
-		put v.cur_target -> effective_health
-		locate (6, 102)
-		put v.cur_target -> health
-	    end if
-	    locate (1, 112)
-	    put num_projectiles : 10
-	    locate (7, 102)
-	    put shortest
-	    locate (8, 102)
-	    put range_turrets (v.e_type) ** 2
-	    locate (9, 102)
-	    put floor (max (1, (v.loc.x - range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1))
-	    locate (10, 102)
-	    put floor (min (MAP_M_WID, (v.loc.x + range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1))
-	    locate (11, 102)
-	    put floor (max (1, (v.loc.y - range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1))
-	    locate (12, 102)
-	    put floor (min (MAP_M_HEI, (v.loc.y + range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1))
-
 	    turret_on_standby (t) := false
 	    turrets_on_standby -= 1
 	end if
     end for
 end resolve_targets
+
+proc update_map
+    for i : 1 .. MAP_WIDTH
+	for j : 1 .. MAP_HEIGHT
+	    map_deaths (i) (j) := max (map_deaths (i) (j) - 1 / 3600, 0)
+	    if map (i) (j) -> class_type = WALL then
+		if map (i) (j) -> health <= 0 then
+		    map_handler (i) (j) := make_ev (NONEXISTENT, 0, 0, 0, 0, FLOOR, make_v (i, j))
+		end if
+	    end if
+	    if map (i) (j) -> class_type = TURRET then
+		if map (i) (j) -> health <= 0 then
+		    map_handler (i) (j) := make_ev (NONEXISTENT, 0, 0, 0, 0, FLOOR, make_v (i, j))
+		end if
+	    end if
+	end for
+    end for
+end update_map
+

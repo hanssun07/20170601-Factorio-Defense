@@ -25,7 +25,7 @@ module Constants
     const ENEMY_T_NUM : int := 8
     const PROJ_NUM : int := 100
     const TURRET_NUM : int := 100
-    const ENEMY_NUM : int := 5
+    const ENEMY_NUM : int := 50
     const PROJ_QUEUE_NUM : int := (TURRET_NUM + ENEMY_NUM) div 2
     
     const ENEMY_MVT_TILES_PER_SEC : real := 0.16
@@ -34,10 +34,10 @@ module Constants
     
     const MAP_WIDTH : int := 50
     const MAP_HEIGHT : int := 50
-    const MAP_B_W_L : int := 11             %map "build allowed" width lower limit
-    const MAP_B_W_U : int := MAP_WIDTH-10   %map "build allowed" width upper limit
+    const MAP_B_W_L : int := 6             %map "build allowed" width lower limit
+    const MAP_B_W_U : int := MAP_WIDTH-5   %map "build allowed" width upper limit
     const MAP_B_H_L : int := 1              %map "build allowed" height lower limit
-    const MAP_B_H_U : int := MAP_HEIGHT-10  %map "build allowed" height upper limit
+    const MAP_B_H_U : int := MAP_HEIGHT-5  %map "build allowed" height upper limit
     const MAP_M_SIZ : int := 5                          %metamap block size
     const MAP_M_WID : int := MAP_WIDTH div MAP_M_SIZ    %width of metamap
     const MAP_M_HEI : int := MAP_HEIGHT div MAP_M_SIZ   %height of metamap
@@ -50,6 +50,8 @@ module Global_Vars
     var proj_speed : array 1 .. PROJ_T_NUM of real
     var proj_sprite : array 1 .. PROJ_T_NUM of int
     var proj_dmg_type : array 1 .. PROJ_T_NUM of int
+    
+    var armor_wall : array 1..DAMAGE_TYPES of int := init(30,100,0,0)
 
     var turret_names : array 1 .. TURRET_T_NUM of string
     var proj_names : array 1..TURRET_T_NUM of string
@@ -58,7 +60,7 @@ module Global_Vars
     var armor_turrets : array 1 .. TURRET_T_NUM of array 1 .. DAMAGE_TYPES of int
     var range_turrets : array 1 .. TURRET_T_NUM of real
     var proj_turrets : array 1..TURRET_T_NUM of int
-    var cost_turrets : array 1..TURRET_T_NUM of int
+    var colors_turrets : array 1..TURRET_T_NUM of int := init(6,2,4)
     
     var enemy_names : array 1 .. ENEMY_T_NUM of string
     var max_healths_enemies : array 1 .. ENEMY_T_NUM of int
@@ -96,6 +98,8 @@ module Global_Vars
     var can_build_turrets : boolean := true
     
     var enemies_through : int := 0
+    var ticks_passed : int := 0
+    var ticks_to_repath : int := 600
 end Global_Vars
 
 module Sidebar
@@ -176,6 +180,9 @@ module Sidebar
     var prod_dist_ys_count : int
     var prod_dist_ys : array 1..50 of unchecked ^int
     var prod_dist_selectable : array 1..50 of boolean
+    var prod_dist_allocs : array 1..50 of unchecked ^real
+    var prod_dist_allocs_agg : array 0..50 of real
+    var prod_dist_allocs_ys  : array 1..50 of int
     
     var font : int
     
@@ -199,6 +206,9 @@ module Sidebar
     var alloc_bar_selected : int := 0
     var mouse_over_item : int := 1
     var mouse_item_selected : int := 1
+    var bar_s_x : int
+    var bar_s_y : int
+    var pd_at_selection : real
     
 end Sidebar
 

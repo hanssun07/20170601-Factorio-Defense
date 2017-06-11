@@ -22,12 +22,13 @@ class Projectile
 
 
     proc initialize (t : cheat
-	unchecked ^entity_vars, pt : int, l : point)
+	unchecked ^entity_vars, pt : int, l : point, dmg : int)
 	v.target := t
 	%v.target_type := tt
 	v.p_type := pt
 	v.loc := l
 	v.state := ALIVE
+	v.dmg := dmg
     end initialize
 
     %update
@@ -39,7 +40,7 @@ class Projectile
 		%if within range, do damage and invalidate; otherwise,
 		%move closer
 		if distance_squared (v.target -> loc, v.loc) <= 0.25 then
-		    v.target -> health -= proj_damage (v.p_type)
+		    v.target -> health -= v.dmg
 		    v.state := NONEXISTENT
 		else
 		    v.loc := add_v (v.loc,

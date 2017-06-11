@@ -119,6 +119,7 @@ module Class_Vars
 	    p_type : int
 	    loc : point
 	    state : int
+	    dmg : int
 	end record
     type path_vars :
 	record
@@ -152,9 +153,9 @@ module Class_Vars
     var proj_queue : array 1 .. PROJ_QUEUE_NUM of proj_vars
 
     %base map; entity_vars of walls
-    var map_handler : array MAP_B_W_L .. MAP_B_W_U of array MAP_B_H_L .. MAP_B_H_U of entity_vars
+    var map_handler : array 1 .. MAP_WIDTH of array 1 .. MAP_HEIGHT of entity_vars
     %map holding pointers to entity_vars of walls and turrets
-    var map : array MAP_B_W_L .. MAP_B_W_U of array MAP_B_H_L .. MAP_B_H_U of unchecked ^entity_vars
+    var map : array 1 .. MAP_WIDTH of array 1 .. MAP_HEIGHT of unchecked ^entity_vars
 
     %metamap holding pointers to entity_vars
     var map_meta : array 1 .. MAP_M_WID of array 1 .. MAP_M_HEI of array 1 .. MAP_M_CAP of unchecked ^entity_vars
@@ -203,4 +204,8 @@ module Class_Vars
 	    end if
 	end if
     end unlock_sem
+    
+    fcn real_damage(damage, dt : int, armor : array 1..DAMAGE_TYPES of int) : int
+	result max(floor(damage*0.01*(100-armor(dt)) + Rand.Real()),1)
+    end real_damage
 end Class_Vars

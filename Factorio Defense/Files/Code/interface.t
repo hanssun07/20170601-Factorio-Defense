@@ -29,7 +29,11 @@ module Interface
 	    tot_dist += prod_distribution_research_user (i)
 	end for
 
-	dist_mult := 1.0 / tot_dist
+	if (tot_dist > 0) then
+	    dist_mult := 1.0 / tot_dist
+	else
+	    dist_mult := 1.0
+	end if
 	prod_distribution_prod_user *= dist_mult
 	prod_distribution_electricity_user *= dist_mult
 	prod_distribution_electricity_storage_user *= dist_mult
@@ -88,8 +92,6 @@ module Interface
 	for i : 1 .. RESEARCH_NUM
 	    prod_distribution_research (i) *= dist_mult
 	end for
-
-
     end fix_int
 
     proc int_tick ()
@@ -174,6 +176,7 @@ module Interface
 	    if prod_until_research_done (i) <= 0 then
 		research_enabled (i) := false
 		prod_distribution_research (i) := 0
+		prod_distribution_research_user (i) := 0
 
 		%handle research effects
 		apply_research_effects (i)
@@ -247,23 +250,30 @@ module Interface
 
     proc update_item_list
 	cheat (addressint, prod_dist_ys (1)) := addr (prod_distribution_prod_y)
+	cheat (addressint, prod_dist_allocs (1)) := addr (prod_distribution_prod_user)
 	prod_dist_selectable (1) := false
 	cheat (addressint, prod_dist_ys (2)) := addr (prod_distribution_electricity_y)
+	cheat (addressint, prod_dist_allocs (2)) := addr (prod_distribution_electricity_user)
 	prod_dist_selectable (2) := false
 	cheat (addressint, prod_dist_ys (3)) := addr (prod_distribution_electricity_storage_y)
+	cheat (addressint, prod_dist_allocs (3)) := addr (prod_distribution_electricity_storage_user)
 	prod_dist_selectable (3) := false
 	cheat (addressint, prod_dist_ys (4)) := addr (prod_distribution_repair_y)
+	cheat (addressint, prod_dist_allocs (4)) := addr (prod_distribution_repair_user)
 	prod_dist_selectable (4) := true
 	cheat (addressint, prod_dist_ys (5)) := addr (prod_distribution_wall_y)
+	cheat (addressint, prod_dist_allocs (5)) := addr (prod_distribution_wall_user)
 	prod_dist_selectable (5) := true
 	var j : int := 6
 	for i : 1 .. TURRET_T_NUM
 	    if (turret_enabled (i)) then
 		cheat (addressint, prod_dist_ys (j)) := addr (prod_distribution_turrets_y (i))
+		cheat (addressint, prod_dist_allocs (j)) := addr (prod_distribution_turrets_user (i))
 		prod_dist_selectable (j) := true
 		j += 1
 		if prod_per_proj (i) > 0 then
 		    cheat (addressint, prod_dist_ys (j)) := addr (prod_distribution_proj_y (i))
+		    cheat (addressint, prod_dist_allocs (j)) := addr (prod_distribution_proj_user (i))
 		    prod_dist_selectable (j) := false
 		    j += 1
 		end if
@@ -272,16 +282,26 @@ module Interface
 	for i : 1 .. RESEARCH_NUM
 	    if (research_enabled (i)) then
 		cheat (addressint, prod_dist_ys (j)) := addr (prod_distribution_research_y (i))
+		cheat (addressint, prod_dist_allocs (j)) := addr (prod_distribution_research_user (i))
 		prod_dist_selectable (j) := false
 		j += 1
+	    else
+		prod_distribution_research (i) := 0
 	    end if
 	end for
 	if rocket_enabled then
-	    cheat (addressint, prod_dist_ys (j)) := addr (prod_distribution_rocket)
+	    cheat (addressint, prod_dist_ys (j)) := addr (prod_distribution_rocket_y)
+	    cheat (addressint, prod_dist_allocs (j)) := addr (prod_distribution_rocket_user)
 	    prod_dist_selectable (j) := false
 	    j += 1
 	end if
 	prod_dist_ys_count := j - 1
+
+	prod_dist_allocs_agg (0) := 0
+	for i : 1 .. prod_dist_ys_count
+	    prod_dist_allocs_agg (i) := prod_dist_allocs_agg (i - 1) + ^ (prod_dist_allocs (i))
+	    prod_dist_allocs_ys (i) := floor (ALLOC_BEGIN - prod_dist_allocs_agg (i) * (ALLOC_HEIGHT - 10 * prod_dist_ys_count) - i * 10)
+	end for
     end update_item_list
 
     %beginning of draw_interface ******************************************
@@ -351,7 +371,7 @@ module Interface
 	    end if
 	end for
 	if rocket_enabled then
-	    draw_part_of_bar (prod_distribution_rocket, ACTUAL_BEGIN + 20, tot_h, alloc_agg, parts_passed, dmmy)
+	    draw_part_of_bar (prod_distribution_rocket, ACTUAL_BEGIN, tot_h, alloc_agg, parts_passed, dmmy)
 	end if
 	Draw.Box (ACTUAL_BEGIN - 1, ALLOC_BEGIN + 1, ACTUAL_BEGIN + 11, ALLOC_BEGIN - ALLOC_HEIGHT - 1, 23)
 
@@ -387,7 +407,7 @@ module Interface
 
 	update_item_list
 	var moved : boolean := false
-	var db : int := min (50, floor (ALLOC_HEIGHT / (num_parts+2)))
+	var db : int := min (50, floor (ALLOC_HEIGHT / (num_parts + 2)))
 	^ (prod_dist_ys (num_parts)) := max ( ^ (prod_dist_ys (num_parts)), db)
 	var n : int := 0
 	loop
@@ -504,7 +524,7 @@ module Interface
 	    parts_passed += 1
 	    Draw.FillBox (cur_x, prod_distribution_rocket_y, cur_x + 50, prod_distribution_rocket_y - 50, COLORS (parts_passed mod NUM_COLORS + 1))
 	    Font.Draw ("Rocket", cur_x + 60, prod_distribution_rocket_y - 12, font, 18)
-	    dmmy := floor ((maxx - cur_x - 92) * prod_until_rocket / 1000000.0 + cur_x + 61)
+	    dmmy := floor ((maxx - cur_x - 92) * (1.0 - prod_until_rocket / 1000000.0) + cur_x + 61)
 	    Draw.FillBox (cur_x + 60, prod_distribution_rocket_y - 23, maxx - 30, prod_distribution_rocket_y - 18, black)
 	    Draw.FillBox (cur_x + 61, prod_distribution_rocket_y - 22, dmmy, prod_distribution_rocket_y - 19, brightgreen)
 	    Font.Draw (intstr (ceil (prod_until_rocket), 1) + " left", cur_x + 60, prod_distribution_rocket_y - 37, font, black)
@@ -518,18 +538,19 @@ module Interface
     end draw_interface
 
     proc handle_input
-	if electricity_production > electricity_consumption then
-	    prod_distribution_electricity_user := 0
-	else
-	    prod_distribution_electricity_user := 1
-	end if
-	for i : 1 .. RESEARCH_NUM
-	    if research_enabled (i) then
-		prod_distribution_research_user (i) := 0.1
-	    else
-		prod_distribution_research_user (i) := 0.0
-	    end if
-	end for
+	/*
+	 if electricity_production > electricity_consumption then
+	 prod_distribution_electricity_user := 0
+	 else
+	 prod_distribution_electricity_user := 1
+	 end if
+	 for i : 1 .. RESEARCH_NUM
+	 if research_enabled (i) then
+	 prod_distribution_research_user (i) := 0.1
+	 else
+	 prod_distribution_research_user (i) := 0.0
+	 end if
+	 end for*/
 
 	var motion : string
 	var x, y, bn, bud : int
@@ -543,25 +564,34 @@ module Interface
 	    end if
 	    exit when bp = false
 	    Mouse.ButtonWait (motion, x, y, bn, bud)
-
-	    if bn = LEFT and bud = RELEASED then
-		mouse_item_selected := 0
+	    if bn = LEFT and motion = "up" then
+		alloc_bar_selected := 0
 	    end if
 
-	    if (bn = LEFT and bud = PRESSED and x > ACTUAL_BEGIN + 15 and x < ACTUAL_BEGIN + 35 and y < ALLOC_BEGIN + 5 and y > ALLOC_BEGIN - ALLOC_HEIGHT - 5) then
-		alloc_bar_selected := y
+	    if (bn = LEFT and motion = "down" and x > ACTUAL_BEGIN + 15 and x < ACTUAL_BEGIN + 35 and y < ALLOC_BEGIN + 5 and y > ALLOC_BEGIN - ALLOC_HEIGHT - 5) then
+		for i : 1 .. prod_dist_ys_count
+		    if y >= prod_dist_allocs_ys (i) then
+			alloc_bar_selected := i
+			pd_at_selection := ^ (prod_dist_allocs (i))
+			bar_s_x := x
+			bar_s_y := y
+			exit
+		    end if
+		end for
 	    else
 		alloc_bar_selected := 0
 	    end if
 
-	    mouse_item_selected := 1
-	    if bn = LEFT then
-		for i : 1 .. prod_dist_ys_count
-		    if (x > ACTUAL_BEGIN + 50 and x < ACTUAL_BEGIN + 100 and y > ^ (prod_dist_ys (i)) - 50 and y < ^ (prod_dist_ys (i))) then
-			mouse_item_selected := i
-			exit
-		    end if
-		end for
+	    if x > INTFC_BEGIN then
+		mouse_item_selected := 1
+		if bn = LEFT then
+		    for i : 1 .. prod_dist_ys_count
+			if (x > ACTUAL_BEGIN + 50 and x < ACTUAL_BEGIN + 100 and y > ^ (prod_dist_ys (i)) - 50 and y < ^ (prod_dist_ys (i))) then
+			    mouse_item_selected := i
+			    exit
+			end if
+		    end for
+		end if
 	    end if
 	end loop
 
@@ -581,7 +611,64 @@ module Interface
 	end for
 
 	if alloc_bar_selected > 0 then
+	    put alloc_bar_selected, prod_dist_allocs_ys (alloc_bar_selected)
+	    var part : int := bar_s_x - round (pd_at_selection * 200)
+	    Draw.Line (part, bar_s_y, part + 200, bar_s_y, black)
+	    Draw.Line (part, bar_s_y - 2, part, bar_s_y + 2, black)
+	    Draw.Line (part + 200, bar_s_y - 2, part + 200, bar_s_y + 2, black)
+	    ^ (prod_dist_allocs (alloc_bar_selected)) := min (1, max (0, (x - part) / 200))
+	end if
 
+	if x < INTFC_BEGIN then
+	    var mx : int := x div PIXELS_PER_GRID + 1
+	    var my : int := y div PIXELS_PER_GRID + 1
+	    if mouse_item_selected = 5 then
+		if num_wall_avail > 0 then
+		    if bn mod 10 = 1 then
+			if mx >= MAP_B_W_L and mx <= MAP_B_W_U and my >= MAP_B_H_L and my <= MAP_B_H_U then
+			    if map (mx) (my) -> class_type < TURRET then
+				^ (map (mx) (my)) := make_ev (ALIVE, 350, 0, 0, 0, WALL, make_v (mx, my))
+				ticks_to_repath -= 20
+				num_wall_avail -= 1
+			    else
+				Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 3, (my - 1) * PIXELS_PER_GRID + 3, (mx) * PIXELS_PER_GRID - 3, (my) * PIXELS_PER_GRID - 3, red)
+			    end if
+			else
+			    Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 3, (my - 1) * PIXELS_PER_GRID + 3, (mx) * PIXELS_PER_GRID - 3, (my) * PIXELS_PER_GRID - 3, red)
+			end if
+		    else
+			if mx >= MAP_B_W_L and mx <= MAP_B_W_U and my >= MAP_B_H_L and my <= MAP_B_H_U then
+			    if map (mx) (my) -> class_type < TURRET then
+				Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 2, (my - 1) * PIXELS_PER_GRID + 2, (mx) * PIXELS_PER_GRID - 2, (my) * PIXELS_PER_GRID - 2, green)
+			    else
+				Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 2, (my - 1) * PIXELS_PER_GRID + 2, (mx) * PIXELS_PER_GRID - 2, (my) * PIXELS_PER_GRID - 2, red)
+			    end if
+			else
+			    Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 2, (my - 1) * PIXELS_PER_GRID + 2, (mx) * PIXELS_PER_GRID - 2, (my) * PIXELS_PER_GRID - 2, red)
+			end if
+		    end if
+		end if
+	    elsif mouse_item_selected = 4 then
+		if bn mod 10 = 1 then
+		    if map (mx) (my) -> class_type = TURRET then
+			for i : 1 .. 50
+			    exit when map (mx) (my) -> health >= max_healths_turrets (map (mx) (my) -> e_type)
+			    exit when num_repair_available <= 0.01
+			    map (mx) (my) -> health += 1
+			    map (mx) (my) -> effective_health += 1
+			    num_repair_available -= 0.01
+			end for
+		    elsif map (mx) (my) -> class_type = WALL then
+			for i : 1 .. 50
+			    exit when map (mx) (my) -> health >= 350
+			    exit when num_repair_available <= 0.01
+			    map (mx) (my) -> health += 1
+			    map (mx) (my) -> effective_health += 1
+			    num_repair_available -= 0.01
+			end for
+		    end if
+		end if
+	    end if
 	end if
 
     end handle_input
