@@ -647,7 +647,7 @@ module Interface
 		end if
 	    else
 		for i : 1 .. TURRET_T_NUM
-		    if mouse_item_selected = selection_num_turrets (i) then
+		    if mouse_item_selected = selection_num_turrets (i) and num_turrets_avail(i) > 0 then
 			if mx >= MAP_B_W_L and mx < MAP_B_W_U and my > MAP_B_H_L and my <= MAP_B_H_U then
 			    bp := true
 			    for j : max (1, (mx - 1) div MAP_M_SIZ + 1) .. min (MAP_M_WID, mx div MAP_M_SIZ + 1)
@@ -662,6 +662,7 @@ module Interface
 				    map (mx) (my - 1) -> class_type < TURRET and
 				    map (mx + 1) (my - 1) -> class_type < TURRET and bp then
 				if bn mod 10 = 1 and can_build_turrets then
+				    num_turrets_avail(i)-=1
 				    spawn_turret_from_topleft (mx, my, i)
 				else
 				    Draw.FillOval (mx * PIXELS_PER_GRID, (my - 1) * PIXELS_PER_GRID, PIXELS_PER_GRID - 2, PIXELS_PER_GRID - 2, green)
