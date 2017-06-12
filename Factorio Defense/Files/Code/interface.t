@@ -6,10 +6,13 @@ module Interface
     forward proc apply_research_effects (rid : int)
     forward proc apply_effect (effect : string)
 
+    % moves a variable towards a value by a percentage amount
     proc move_towards (var f : real, t, r : real)
 	f += (t - f) * r
     end move_towards
 
+    % normalizes production distributions and moves real production
+    % towards user-requested production
     proc fix_int ()
 	var tot_dist : real := 0
 	var dist_mult : real
@@ -93,18 +96,26 @@ module Interface
 	end for
     end fix_int
 
+    %updates the interface stats
     proc int_tick ()
+	%before updating, make sure everything is working properly
 	fix_int
 
 	var t : real
-
+	
+	%this is the amount of production created every tick
 	prod_avail := 0
 	ticks_to_next_prod -= 1
 	loop
 	    exit when ticks_to_next_prod > 0
-
+	    
+	    %this part uses some arithmetic to directly find how many
+	    %production points you'll make
 	    t := floor (max (-ticks_to_next_prod / ticks_per_prod, 1))
 	    ticks_to_next_prod += t * ticks_per_prod
+	    
+	    %if you ran out of electricity to sustain production, then
+	    %production will falter to at most 60pt/sec
 	    if electricity_stored > 0 then
 		prod_avail += floor (t)
 	    else
@@ -112,19 +123,24 @@ module Interface
 	    end if
 	end loop
 
-	%update production
+	%update production; use diminishing returns
 	prod_per_tick += sqrt (prod_per_tick) / prod_per_tick * prod_distribution_prod * prod_avail / 600.0
 	ticks_per_prod := 1.0 / prod_per_tick
 
 	%update electricity
+	%consumption is proportional to production
 	electricity_consumption := prod_per_tick / 6.0
+	%update the amount stored
 	electricity_stored += (electricity_production - electricity_consumption) / 60.0
+	%clamp storage between acceptable values
 	if electricity_stored < 0 then
 	    electricity_stored := 0
 	elsif electricity_stored > electricity_storage then
 	    electricity_stored := electricity_storage
 	end if
+	%production increases slowly according to production allocated
 	electricity_production += prod_distribution_electricity * prod_avail / 60.0
+	%increase the progress towards next accumulator
 	loop
 	    exit when prod_until_next_e_storage > 0
 	    electricity_storage += 100.0
@@ -140,6 +156,7 @@ module Interface
 	    num_repair_available += 1
 	end loop
 
+	%update walls
 	prod_until_next_wall -= prod_per_tick * prod_distribution_wall
 	loop
 	    exit when prod_until_next_wall > 0
@@ -159,6 +176,8 @@ module Interface
 		num_turrets_avail (i) += 1
 		prod_until_next_turret (i) += prod_per_turret (i)
 	    end loop
+	    %if there's less than zero production needed to build a projectile,
+	    %it draws electricity; if that's the case, it doesn't use ammunition
 	    if prod_per_proj (i) > 0 then
 		loop
 		    exit when prod_until_next_proj (i) > 0
@@ -172,6 +191,7 @@ module Interface
 	var prereqs : boolean := false
 	for i : 1 .. RESEARCH_NUM
 	    prod_until_research_done (i) -= prod_distribution_research (i) * prod_avail
+	    %check if research is done and, if so, clean it up
 	    if prod_until_research_done (i) <= 0 then
 		research_enabled (i) := false
 		prod_distribution_research (i) := 0
@@ -183,22 +203,24 @@ module Interface
 		prereqs := true
 	    end if
 	end for
-	%if a research was completed, check and enabled those which are available.
+	%if a research was completed, check and enable those which are available.
 	if prereqs then
 	    check_research_prereqs
 	end if
     end int_tick
 
-
+    %wrapper for applying research effects
     body proc apply_research_effects (rid : int)
 	apply_effect (research_effect (rid))
 	apply_effect (research_effect_2 (rid))
     end apply_research_effects
 
     body proc apply_effect (effect : string)
+	% hyphen means not applicable
 	if effect (1) = "-" then
 	    return
 	end if
+	%split the effects into tokens, then update values accordingly
 	var tmp, tmp2 : int
 	if effect (1 .. 11) = "proj_damage" then
 	    tmp := index (effect, " ") + 1
@@ -219,6 +241,9 @@ module Interface
 	end if
     end apply_effect
 
+    %this draws one segment of a production allocation bar,
+    %updating relevant variables so that the next segment
+    %can be easily drawn
     proc draw_part_of_bar (used_part : real, x, tot_h : int, var agg : real, var parts_passed, cur_y : int)
 	cur_y := ALLOC_BEGIN - floor (agg * tot_h + 10 * parts_passed)
 	agg += used_part
@@ -227,19 +252,28 @@ module Interface
 	Draw.FillBox (x, cur_y, x + 10, next_y, COLORS ((parts_passed - 1) mod NUM_COLORS + 1))
     end draw_part_of_bar
 
+    %update pointer lists so that we don't need to have thousands
+    %of if statements handling every case
     proc update_item_list
+	%the lists are the y-values of items, the allocation of production of items,
+	%and whether or not they're selectable.
+	%production infrastructure is first, and not selectable
 	cheat (addressint, prod_dist_ys (1)) := addr (prod_distribution_prod_y)
 	cheat (addressint, prod_dist_allocs (1)) := addr (prod_distribution_prod_user)
 	prod_dist_selectable (1) := false
+	%electric generation infrastructure is second, and not selectable
 	cheat (addressint, prod_dist_ys (2)) := addr (prod_distribution_electricity_y)
 	cheat (addressint, prod_dist_allocs (2)) := addr (prod_distribution_electricity_user)
 	prod_dist_selectable (2) := false
+	%production infrastructure is first, and not selectable
 	cheat (addressint, prod_dist_ys (3)) := addr (prod_distribution_electricity_storage_y)
 	cheat (addressint, prod_dist_allocs (3)) := addr (prod_distribution_electricity_storage_user)
 	prod_dist_selectable (3) := false
+	%production infrastructure is first, and not selectable
 	cheat (addressint, prod_dist_ys (4)) := addr (prod_distribution_repair_y)
 	cheat (addressint, prod_dist_allocs (4)) := addr (prod_distribution_repair_user)
 	prod_dist_selectable (4) := true
+	%production infrastructure is first, and not selectable
 	cheat (addressint, prod_dist_ys (5)) := addr (prod_distribution_wall_y)
 	cheat (addressint, prod_dist_allocs (5)) := addr (prod_distribution_wall_user)
 	prod_dist_selectable (5) := true

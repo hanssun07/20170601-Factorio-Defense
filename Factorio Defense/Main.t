@@ -25,7 +25,8 @@ loop
 	exit
     end if
 
-    %prep phase
+    % prep phase: no enemies and no need to update;
+    % continue when first turret is placed
     var tick : int
     loop
 	tick := Time.Elapsed
@@ -36,19 +37,20 @@ loop
 	draw_interface
 	handle_input
 	fix_int
-	% check for win/lose-condition
 
 	%tick done; render and wait
 	View.Update
 
+	%check for progress
 	exit when num_turrets > 0
 
-	ticks_passed += 1
 	delay (16 - Time.Elapsed + tick)
     end loop
-
-    %game
+    
+    % give enemies a path
     path_map
+    
+    % game
     loop
 	tick := Time.Elapsed
 
@@ -57,6 +59,7 @@ loop
 	    update_map
 	end if
 	draw_map
+	
 	% update all turrets
 	for i : 1 .. last_turret
 	    if not paused then
@@ -64,8 +67,10 @@ loop
 	    end if
 	    turrets (i) -> draw
 	end for
+	
 	% update all enemies
 	for i : 1 .. ENEMY_NUM
+	    % the pre-update prevents throttling
 	    enemies (i) -> pre_update
 	end for
 	for i : 1 .. ENEMY_NUM
@@ -77,6 +82,7 @@ loop
 	if not paused then
 	    spawn_enemies
 	end if
+	
 	% update all projectiles
 	for i : 1 .. PROJ_NUM
 	    if not paused then
