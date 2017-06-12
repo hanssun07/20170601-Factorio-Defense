@@ -721,7 +721,7 @@ proc spawn_enemies
     var enemy_power : real := 0
     for i : 1 .. ENEMY_NUM
 	if enemies (i) -> v.state = ALIVE then
-	    enemy_power += ((range_enemies (enemies (i) -> v.e_type) div 4 + 1) * max_healths_enemies (enemies (i) -> v.e_type))
+	    enemy_power += ((range_enemies (enemies (i) -> v.e_type) div 6 + 1) * max_healths_enemies (enemies (i) -> v.e_type))
 	end if
     end for
     var likelihood : array 1 .. ENEMY_T_NUM of real
@@ -740,7 +740,7 @@ proc spawn_enemies
 	enemies_needed := ENEMY_NUM - num_enemies
 	power_to_fill := (player_power - 0)
 	for i : 1 .. ENEMY_T_NUM
-	    power := ((range_enemies (i) div 4 + 1) * max_healths_enemies (i))
+	    power := ((range_enemies (i) div 6 + 1) * max_healths_enemies (i))
 	    expected_num := power_to_fill / power
 	    expected_error := 1 / expected_num
 	    chance := exp (- ((ln (expected_error) ** 2)))
@@ -754,7 +754,7 @@ proc spawn_enemies
 	    choice -= likelihood (i)
 	    if choice < 0 then
 		spawn_enemy (i)
-		enemy_power += ((range_enemies (i) div 4 + 1) * max_healths_enemies (i))
+		enemy_power += ((range_enemies (i) div 6 + 1) * max_healths_enemies (i))
 		exit
 	    end if
 	end for
