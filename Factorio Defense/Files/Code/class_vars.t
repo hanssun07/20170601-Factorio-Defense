@@ -153,9 +153,15 @@ proc begin_init ()
     can_fire := true
     enemies_through := 0
     chunks_avail_for_spawn := MAP_M_WID + MAP_M_HEI * 2 - 2
+    last_turret := 0
+    num_turrets := 0
+    can_build_turrets := true
+    can_spawn := true
+    num_enemies := 0
+    ticks_passed := 0
 
     prod_avail := 0
-    prod_per_tick := 1000 / 60
+    prod_per_tick := 1 / 60
     ticks_to_next_prod := 6
     ticks_per_prod := 6
     prod_distribution_prod := 1
@@ -267,39 +273,40 @@ end resolve_enemies
 %after a search - O(n) - so that this works. Since we can't keep track of
 %enemy targets, we can't necessarily clear them, and it'll look pretty stupid
 %to have enemies, all of a sudden, get confused
-proc resolve_turrets
-    var i : int := 1
-    var t : ^Turret
-    new t
-    loop
-	exit when last_turret = num_turrets
-	if turrets (last_turret) -> v.state < ALIVE then
-	    last_turret -= 1
-	elsif turrets (i) -> v.state = ALIVE then
-	    i += 1
-	else
-	    %swap the two
-	    t -> v := turrets (i) -> v
-	    t -> kills := turrets (i) -> kills
-	    t -> damage_dealt := turrets (i) -> damage_dealt
-	    turrets (i) -> v := turrets (last_turret) -> v
-	    turrets (i) -> kills := turrets (last_turret) -> kills
-	    turrets (i) -> damage_dealt := turrets (last_turret) -> damage_dealt
-	    turrets (last_turret) -> v := t -> v
-	    turrets (last_turret) -> kills := t -> kills
-	    turrets (last_turret) -> damage_dealt := t -> damage_dealt
+/*proc resolve_turrets
+ var i : int := 1
+ var t : ^Turret
+ new t
+ loop
+ exit when last_turret = num_turrets
+ if turrets (last_turret) -> v.state < ALIVE then
+ last_turret -= 1
+ elsif turrets (i) -> v.state = ALIVE then
+ i += 1
+ else
+ can_build_turrets:= true
+ %swap the two
+ t -> v := turrets (i) -> v
+ t -> kills := turrets (i) -> kills
+ t -> damage_dealt := turrets (i) -> damage_dealt
+ turrets (i) -> v := turrets (last_turret) -> v
+ turrets (i) -> kills := turrets (last_turret) -> kills
+ turrets (i) -> damage_dealt := turrets (last_turret) -> damage_dealt
+ turrets (last_turret) -> v := t -> v
+ turrets (last_turret) -> kills := t -> kills
+ turrets (last_turret) -> damage_dealt := t -> damage_dealt
 
-	    %fix indicies
-	    turrets (i) -> v.ind := i
-	    turrets (last_turret) -> v.ind := last_turret
+ %fix indicies
+ turrets (i) -> v.ind := i
+ turrets (last_turret) -> v.ind := last_turret
 
-	    %we know both will pass the checks above, so increment them
-	    last_turret -= 1
-	    i += 1
-	end if
-    end loop
-    free t
-end resolve_turrets
+ %we know both will pass the checks above, so increment them
+ last_turret -= 1
+ i += 1
+ end if
+ end loop
+ free t
+ end resolve_turrets*/
 
 %heap for flowfield generation
 proc push_to_heap (p : path_vars, var size : int)
@@ -374,7 +381,7 @@ proc path_map ()
 		    end if
 		    nn.weight += map_deaths (i) (j) * 0.2
 		    nn.weight += Rand.Real () * 0.001
-		    nn.weight += map (i) (j) -> effective_health * 0.5
+		    nn.weight += map (i) (j) -> effective_health * 2
 		    %check if new attempt is shortest; if so, add to heap
 		    if map_weights (i) (j) > nn.weight then
 			map_mov (0) (i) (j) := make_v (cn.x - i, cn.y - j)
@@ -387,6 +394,7 @@ proc path_map ()
     end loop
 
     %spitters: begin at all turrets and at biter endpoint
+    map_heap_size := 0
     reset_map
     map_mov (1) (MAP_WIDTH div 2) (1) := make_v (0, -1)
     map_weights (MAP_WIDTH div 2) (1) := COMPLETE
@@ -394,8 +402,8 @@ proc path_map ()
     for i : 1 .. last_turret
 	if turrets (i) -> v.state = ALIVE then
 	    map_mov (1) (floor (turrets (i) -> v.loc.x)) (floor (turrets (i) -> v.loc.y)) := make_v (0, 0)
-	    map_weights (1) (MAP_WIDTH div 2) := COMPLETE
-	    push_to_heap (make_node (MAP_WIDTH div 2, 1, 0), map_heap_size)
+	    map_weights (floor (turrets (i) -> v.loc.x)) (floor (turrets (i) -> v.loc.y)) := COMPLETE
+	    push_to_heap (make_node (floor (turrets (i) -> v.loc.x), floor (turrets (i) -> v.loc.y), 0), map_heap_size)
 	end if
     end for
     loop
@@ -413,7 +421,7 @@ proc path_map ()
 		    end if
 		    nn.weight += map_deaths (i) (j) * 0.4
 		    nn.weight += Rand.Real () * 0.001
-		    nn.weight += map (i) (j) -> effective_health * 1
+		    nn.weight += map (i) (j) -> effective_health * 5
 		    %check if new attempt is shortest; if so, add to heap
 		    if map_weights (i) (j) > nn.weight then
 			map_mov (1) (i) (j) := make_v (cn.x - i, cn.y - j)
@@ -425,9 +433,10 @@ proc path_map ()
 	end if
     end loop
 
-    for i : 1 .. MAP_WIDTH
-	for j : 1 .. MAP_HEIGHT
-	    for k : 0 .. 1
+    for k : 0 .. 1
+	for i : 1 .. MAP_WIDTH
+	    for j : 1 .. MAP_HEIGHT
+		%for k : 0 .. 1
 		map_mov (k) (i) (j) := normalize (map_mov (k) (i) (j))
 	    end for
 	end for
@@ -435,7 +444,6 @@ proc path_map ()
 
 end path_map
 
-%will be overhauled later
 proc draw_map ()
     var tc : int := 28
     var gl : int := 27
@@ -456,9 +464,16 @@ proc draw_map ()
 		    Draw.Line (ceil ((i - 1 + map (i) (j) -> health / 350) * PIXELS_PER_GRID), (j - 1) * PIXELS_PER_GRID, ((i) * PIXELS_PER_GRID), (j - 1) * PIXELS_PER_GRID, brightred)
 		end if
 	    end if
+	    if map_handler (i) (j).class_type = FIRE then
+		for k : 1 .. max (1, floor (0.3 * sqrt (map_handler (i) (j).health)))
+		    var s : int := Rand.Int (1, PIXELS_PER_GRID div 3)
+		    Draw.FillOval (floor ((i - Rand.Real) * PIXELS_PER_GRID), floor ((j - Rand.Real) * PIXELS_PER_GRID),
+			s, s, Rand.Int (41, 43))
+		end for
+	    end if
 	end for
     end for
-    for i : 1 .. 0%MAP_WIDTH
+    for i : 1 .. 0 %MAP_WIDTH
 	for j : 1 .. MAP_HEIGHT
 	    Draw.Line (round ((i - 0.5) * PIXELS_PER_GRID),
 		round ((j - 0.5) * PIXELS_PER_GRID),
@@ -542,8 +557,8 @@ proc resolve_targets
 	    for i : floor (max (MAP_B_W_L, v.loc.x - 1)) .. floor (min (MAP_B_W_U, v.loc.x + 1))
 		for j : floor (max (MAP_B_H_L, v.loc.y - 1)) .. floor (min (MAP_B_H_U, v.loc.y + 1))
 		    if map (i) (j) -> class_type = WALL then
-			if Math.Distance (i, j, v.loc.x, v.loc.y) < 0.7 then
-			    enemies(e)->v.cur_target := map (i) (j)
+			if Math.Distance (i, j, v.loc.x, v.loc.y) < 0.5 then
+			    enemies (e) -> v.cur_target := map (i) (j)
 			    found := true
 			    exit
 			end if
@@ -562,7 +577,7 @@ proc resolve_targets
 			floor (min (MAP_M_WID, (v.loc.x + range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1))
 		    for j : floor (max (1, (v.loc.y - range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
 			    floor (min (MAP_M_HEI, (v.loc.y + range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1))
-			check := map_meta_sem (i) (j)
+			check := MAP_M_CAP - map_meta_sem (i) (j)
 			for k : 1 .. MAP_M_CAP
 			    exit when check <= 0
 			    if map_meta (i) (j) (k) not= nil then
@@ -608,12 +623,15 @@ proc resolve_targets
 		    floor (min (MAP_M_WID, (v.loc.x + range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1))
 		for j : floor (max (1, (v.loc.y - range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
 			floor (min (MAP_M_HEI, (v.loc.y + range_turrets (v.e_type) - 1) / MAP_M_SIZ + 1))
-		    check := map_meta_sem (i) (j)
+		    check := MAP_M_CAP - map_meta_sem (i) (j)
 		    for k : 1 .. MAP_M_CAP
 			exit when check <= 0
 			if map_meta (i) (j) (k) not= nil then
 			    if map_meta (i) (j) (k) -> class_type = ENEMY and map_meta (i) (j) (k) -> effective_health > 0 then
 				cur := distance_squared (map_meta (i) (j) (k) -> loc, v.loc)
+				if proj_dmg_type (proj_turrets (v.e_type)) = 3 then
+				    cur += Rand.Real * 100
+				end if
 				if cur < shortest then
 				    u := map_meta (i) (j) (k)
 				    shortest := cur
@@ -647,7 +665,14 @@ proc update_map
 		end if
 	    end if
 	    if map (i) (j) -> class_type = TURRET then
-		if map (i) (j) -> health <= 0 then
+		if map (i) (j) -> state < ALIVE then
+		    map_handler (i) (j) := make_ev (NONEXISTENT, 0, 0, 0, 0, FLOOR, make_v (i, j))
+		    cheat (addressint, map (i) (j)) := addr (map_handler (i) (j))
+		end if
+	    end if
+	    if map_handler (i) (j).class_type = FIRE then
+		map_handler (i) (j).health -= 1
+		if map_handler (i) (j).health <= 0 then
 		    map_handler (i) (j) := make_ev (NONEXISTENT, 0, 0, 0, 0, FLOOR, make_v (i, j))
 		end if
 	    end if
@@ -655,3 +680,83 @@ proc update_map
     end for
 end update_map
 
+proc spawn_turret_from_topleft (mx, my, i : int)
+    num_turrets += 1
+    if num_turrets >= TURRET_NUM then
+	can_build_turrets := false
+    end if
+    var bp : boolean
+    var n : int := 1
+    for j : 1 .. TURRET_NUM
+	if turrets (j) -> v.state < ALIVE then
+	    n := j
+	    exit
+	end if
+    end for
+    if n > last_turret then
+	last_turret := n
+    end if
+
+    turrets (n) -> initialize (n, i, make_v (mx + 0.5, my - 0.5))
+    for j : mx .. mx + 1
+	for k : my - 1 .. my
+	    cheat (addressint, map (j) (k)) := addr (turrets (n) -> v)
+	end for
+    end for
+    for j : max (1, (mx - 1) div MAP_M_SIZ + 1) .. min (MAP_M_WID, (mx) div MAP_M_SIZ) + 1
+	for k : max (1, (my - 2) div MAP_M_SIZ + 1) .. min (MAP_M_HEI, (my - 1) div MAP_M_SIZ) + 1
+	    bp := lock_sem (j, k, addr (turrets (n) -> v))
+	end for
+    end for
+end spawn_turret_from_topleft
+
+proc spawn_enemies
+    var player_power : real := 0
+    for i : 1 .. TURRET_NUM
+	if turrets (i) -> v.state = ALIVE then
+	    player_power += turrets (i) -> v.e_type
+	    end if
+    end for
+    player_power := player_power*10+  sqrt (prod_per_tick * 60)
+    var enemy_power : real := 0
+    for i : 1 .. ENEMY_NUM
+	if enemies (i) -> v.state = ALIVE then
+	    enemy_power += ((range_enemies (enemies (i) -> v.e_type) div 4 + 1) * max_healths_enemies (enemies (i) -> v.e_type))
+	end if
+    end for
+    var likelihood : array 1 .. ENEMY_T_NUM of real
+    var llh_sum : real
+    var choice : real
+    var power_to_fill : real
+    var power : real
+    var enemies_needed : real
+    var expected_num : real
+    var expected_error : real
+    var chance : real
+    loop
+	exit when enemy_power > player_power**1.2
+	exit when num_enemies >= ENEMY_NUM
+	llh_sum := 0
+	enemies_needed := ENEMY_NUM - num_enemies
+	power_to_fill := (player_power - 0)
+	for i : 1 .. ENEMY_T_NUM
+	    power := ((range_enemies (i) div 4 + 1) * max_healths_enemies (i))
+	    expected_num := power_to_fill / power
+	    expected_error := 1 / expected_num
+	    chance := exp (- ((ln (expected_error) ** 2)))
+	    llh_sum += chance
+	    likelihood (i) := chance
+	end for
+
+	exit when chance = 0
+	choice := Rand.Real () * chance
+	for i : 1 .. ENEMY_T_NUM
+	    choice -= likelihood (i)
+	    if choice < 0 then
+		spawn_enemy (i)
+		enemy_power += ((range_enemies (i) div 4 + 1) * max_healths_enemies (i))
+		exit
+	    end if
+	end for
+    end loop
+end spawn_enemies
