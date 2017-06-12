@@ -435,7 +435,10 @@ module Interface
 	Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_electricity_y - 26, font, black)
 	str := frealstr (electricity_consumption, 1, 1)
 	spc := (8 - length (str)) * NMRL_STR_WIDTH
-	if electricity_stored / (electricity_consumption - electricity_production) < 60 and electricity_consumption > electricity_production then
+	if electricity_consumption = electricity_production then
+	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_electricity_y - 41, font, black)
+	    Font.Draw ("-", cur_x + 60, prod_distribution_electricity_y - 41, font, black)
+	elsif electricity_stored / (electricity_consumption - electricity_production) < 60 and electricity_consumption > electricity_production then
 	    Font.Draw (str + " per second", cur_x + 60 + spc, prod_distribution_electricity_y - 41, font, brightred)
 	    Font.Draw ("-", cur_x + 60, prod_distribution_electricity_y - 41, font, brightred)
 	else
@@ -586,7 +589,6 @@ module Interface
 	end for
 
 	if alloc_bar_selected > 0 then
-	    put alloc_bar_selected, prod_dist_allocs_ys (alloc_bar_selected)
 	    var part : int := bar_s_x - round (pd_at_selection * 200)
 	    Draw.Line (part, bar_s_y, part + 200, bar_s_y, black)
 	    Draw.Line (part, bar_s_y - 2, part, bar_s_y + 2, black)

@@ -74,16 +74,7 @@ class Enemy
 		3, armor_enemies (v.e_type))
 	    v.health -= s
 	    v.effective_health -= s
-	end if
-	
-	locate (1,1)
-	put v_to_string(v.loc)
-	put v_to_string(dl)
-	put floor ((v.loc.x - 1) / MAP_M_SIZ) + 1, ", ", floor ((v.loc.y - 1) / MAP_M_SIZ) + 1
-	put map_meta_sem(floor ((v.loc.x - 1) / MAP_M_SIZ) + 1)(floor ((v.loc.y - 1) / MAP_M_SIZ) + 1)
-	put turrets_on_standby
-	put v.effective_health
-	
+	end if        
 	v.cooldown -= 1
     end update
 
