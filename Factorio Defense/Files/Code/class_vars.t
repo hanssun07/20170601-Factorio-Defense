@@ -153,6 +153,12 @@ proc begin_init ()
     can_fire := true
     enemies_through := 0
     chunks_avail_for_spawn := MAP_M_WID + MAP_M_HEI * 2 - 2
+    last_turret := 0
+    num_turrets := 0
+    can_build_turrets := true
+    can_spawn := true
+    num_enemies := 0
+    ticks_passed := 0
 
     prod_avail := 0
     prod_per_tick := 1 / 60

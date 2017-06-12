@@ -12,15 +12,15 @@ setscreen ("graphics:1100;800")
 View.Set ("offscreenonly")
 
 
-loop
-    % load everything
-    startup_init
-    read_data
+% load everything
+startup_init
+read_data
 
+loop
     % display and handle menu screen
     % initialize game
     begin_init
-    
+
     %prep phase
     var tick : int
     loop
@@ -33,16 +33,16 @@ loop
 	handle_input
 	fix_int
 	% check for win/lose-condition
-	
+
 	%tick done; render and wait
 	View.Update
-	
+
 	exit when num_turrets > 0
 
 	ticks_passed += 1
 	delay (16 - Time.Elapsed + tick)
     end loop
-    
+
     %game
     path_map
     loop
@@ -65,7 +65,7 @@ loop
 	    enemies (i) -> draw
 	end for
 	%if num_enemies <= 0 then
-	    spawn_enemies
+	spawn_enemies
 	%end if
 	% update all projectiles
 	for i : 1 .. PROJ_NUM
@@ -85,15 +85,38 @@ loop
 	int_tick
 	draw_interface
 	handle_input
-	% check for win/lose-condition
-	
+
 	%tick done; render and wait
 	View.Update
+
+	% check for win/lose-condition
+	exit when enemies_through > 0 or prod_until_rocket <= 0
 
 	ticks_passed += 1
 	delay (16 - Time.Elapsed + tick)
     end loop
-    % loop back to menu if play again
+
+    % handle game-over
+    Draw.FillBox (300, 299, 801, 500, 24)
+    Draw.FillBox (299, 300, 800, 501, 30)
+    Draw.FillBox (300, 300, 800, 500, 28)
+    var wid : int
+    if enemies_through > 0 then
+	wid := Font.Width ("Game Over. Better luck next time!", font)
+	Font.Draw ("Game Over. Better luck next time!", 550 - wid div 2, 400, font, black)
+    else
+	wid := Font.Width ("With the rocket you built, you escape the planet.", font)
+	Font.Draw ("With the rocket you built, you escape the planet.", 550 - wid div 2, 410, font, black)
+	wid := Font.Width ("You won! Congratulations!", font)
+	Font.Draw ("You won! Congratulations!", 550 - wid div 2, 390, font, black)
+    end if
+    wid := Font.Width ("Press any key to continue...", font)
+    Font.Draw ("Press any key to continue...", 550 - wid div 2, 340, font, black)
+    View.Update
+
+    % return to main menu when key pressed
+    var c : string (1)
+    getch (c)
 end loop
 
 
