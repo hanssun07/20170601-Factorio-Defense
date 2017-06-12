@@ -647,7 +647,7 @@ module Interface
 		end if
 	    else
 		for i : 1 .. TURRET_T_NUM
-		    if mouse_item_selected = selection_num_turrets (i) and num_turrets_avail(i) > 0 then
+		    if mouse_item_selected = selection_num_turrets (i) and num_turrets_avail (i) > 0 then
 			if mx >= MAP_B_W_L and mx < MAP_B_W_U and my > MAP_B_H_L and my <= MAP_B_H_U then
 			    bp := true
 			    for j : max (1, (mx - 1) div MAP_M_SIZ + 1) .. min (MAP_M_WID, mx div MAP_M_SIZ + 1)
@@ -662,7 +662,7 @@ module Interface
 				    map (mx) (my - 1) -> class_type < TURRET and
 				    map (mx + 1) (my - 1) -> class_type < TURRET and bp then
 				if bn mod 10 = 1 and can_build_turrets then
-				    num_turrets_avail(i)-=1
+				    num_turrets_avail (i) -= 1
 				    spawn_turret_from_topleft (mx, my, i)
 				else
 				    Draw.FillOval (mx * PIXELS_PER_GRID, (my - 1) * PIXELS_PER_GRID, PIXELS_PER_GRID - 2, PIXELS_PER_GRID - 2, green)
@@ -677,13 +677,73 @@ module Interface
 		    end if
 		end for
 	    end if
-	    
+
 	    if bn div 100 = 1 then
-		if map(mx)(my)->class_type not= FIRE then
-		    map(mx)(my)->health := 0
-		    map(mx)(my)->effective_health := 0
+		if map (mx) (my) -> class_type not= FIRE then
+		    map (mx) (my) -> health := 0
+		    map (mx) (my) -> effective_health := 0
 		end if
 	    end if
 	end if
     end handle_input
+
+    var synopsis : array 1 .. 12 of string := init (
+	"You have crashlanded on an unknown, alien planet.",
+	"",
+	"To escape, you must build a rocket. To build a",
+	"rocket, you have built a factory.",
+	"",
+	"But the aliens do not take kindly to your pollution.",
+	"You must keep them at bay, or your factory, and your",
+	"hope, will be destroyed.",
+	"",
+	"Manage what your factory produces. Build turrets and",
+	"ammunition to supply them. Research new technologies.",
+	"And, finally, make sure they do not get in.")
+    var turret_synopsises : array 1 .. 3 of array 1 .. 3 of string := init (
+	init ("The gun turret is the most basic of turrets. Supplied by bullets,",
+	"its power weakens as the aliens become stronger.", ""),
+	init ("The flamethrower doesn't damage aliens directly; instead, it leaves",
+	"the ground burning where its oil sacks land. As such, it's great for",
+	"crowd control; beware, however, that it might destroy your own buildings."),
+	init ("The laser turret is an amazing technological advance. It uses electricity",
+	"to fire, bypassing most aliens' defenses. Just make sure you don't run out of",
+	"electricity to fuel it with."))
+    fcn handle_intro_screen() : boolean
+	Draw.FillBox (0, 0, 1100, 800, 28)
+	var wid : int
+	wid := Font.Width ("Factorio Defense", font)
+	Font.Draw ("Factorio Defense", 550 - wid div 2, 700, font, black)
+	Font.Draw ("Factorio Defense", 550 - wid div 2 + 1, 699, font, black)
+
+	for i : 1 .. upper (synopsis)
+	    Font.Draw (synopsis (i), 100, 640 - i * 20, font, black)
+	end for
+
+	for i : 1 .. 3
+	    Draw.FillOval(580,720 - i * 100, PIXELS_PER_GRID, PIXELS_PER_GRID, COLORS(colors_turrets(i)))
+	    for j : 1 .. 3
+		Font.Draw(turret_synopsises(i)(j), 600, 740 - i * 100 - j * 20, font, black)
+	    end for
+	end for
+	
+	
+	wid := Font.Width ("The game will begin when you place your first turret.", font)
+	Font.Draw ("The game will begin when you place your first turret.", 550 - wid div 2, 240, font, black)
+	wid := Font.Width ("Press [Space] to play.", font)
+	Font.Draw ("Press [Space] to play.", 550 - wid div 2, 200, font, black)
+	wid := Font.Width ("Alternatively, Press Q to quit.", font)
+	Font.Draw ("Alternatively, Press Q to quit.", 550 - wid div 2, 180, font, black)
+
+	View.Update()
+	var c : string (1)
+	loop
+	getch (c)
+	    if c = "Q" or c = "q" then
+		result false
+		elsif c = " " then
+		result true
+		end if
+	end loop
+    end handle_intro_screen
 end Interface

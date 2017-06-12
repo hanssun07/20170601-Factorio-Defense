@@ -8,7 +8,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % files/code folder
 include "files/code/includes.t"
-setscreen ("graphics:1100;800")
+setscreen ("graphics:1100;800,nocursor,nobuttonbar")
 View.Set ("offscreenonly")
 
 
@@ -17,9 +17,13 @@ startup_init
 read_data
 
 loop
-    % display and handle menu screen
     % initialize game
     begin_init
+
+    % display and handle menu screen
+    if not handle_intro_screen() then
+	exit
+    end if
 
     %prep phase
     var tick : int
