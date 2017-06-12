@@ -211,5 +211,7 @@ module Sidebar
     var bar_s_y : int
     var pd_at_selection : real
     
+    var paused : boolean := false
+    
 end Sidebar
 

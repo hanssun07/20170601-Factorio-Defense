@@ -570,6 +570,8 @@ module Interface
 		mouse_item_selected := 5
 	    elsif c = "r" or c = "R" then
 		mouse_item_selected := 4
+	    elsif c = "p" or c = "P" then
+		paused := not paused
 	    end if
 	end if
 
@@ -709,7 +711,7 @@ module Interface
 	init ("The laser turret is an amazing technological advance. It uses electricity",
 	"to fire, bypassing most aliens' defenses. Just make sure you don't run out of",
 	"electricity to fuel it with."))
-    fcn handle_intro_screen() : boolean
+    fcn handle_intro_screen () : boolean
 	Draw.FillBox (0, 0, 1100, 800, 28)
 	var wid : int
 	wid := Font.Width ("Factorio Defense", font)
@@ -721,13 +723,13 @@ module Interface
 	end for
 
 	for i : 1 .. 3
-	    Draw.FillOval(580,720 - i * 100, PIXELS_PER_GRID, PIXELS_PER_GRID, COLORS(colors_turrets(i)))
+	    Draw.FillOval (580, 720 - i * 100, PIXELS_PER_GRID, PIXELS_PER_GRID, COLORS (colors_turrets (i)))
 	    for j : 1 .. 3
-		Font.Draw(turret_synopsises(i)(j), 600, 740 - i * 100 - j * 20, font, black)
+		Font.Draw (turret_synopsises (i) (j), 600, 740 - i * 100 - j * 20, font, black)
 	    end for
 	end for
-	
-	
+
+
 	wid := Font.Width ("The game will begin when you place your first turret.", font)
 	Font.Draw ("The game will begin when you place your first turret.", 550 - wid div 2, 240, font, black)
 	wid := Font.Width ("Press [Space] to play.", font)
@@ -735,15 +737,15 @@ module Interface
 	wid := Font.Width ("Alternatively, Press Q to quit.", font)
 	Font.Draw ("Alternatively, Press Q to quit.", 550 - wid div 2, 180, font, black)
 
-	View.Update()
+	View.Update ()
 	var c : string (1)
 	loop
-	getch (c)
+	    getch (c)
 	    if c = "Q" or c = "q" then
 		result false
-		elsif c = " " then
+	    elsif c = " " then
 		result true
-		end if
+	    end if
 	end loop
     end handle_intro_screen
 end Interface

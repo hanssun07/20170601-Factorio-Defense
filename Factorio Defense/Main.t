@@ -8,8 +8,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % files/code folder
 include "files/code/includes.t"
-setscreen ("graphics:1100;800,nocursor,nobuttonbar")
-View.Set ("offscreenonly")
+setscreen ("graphics:1100;800,nocursor,nobuttonbar,noecho")
+View.Set ("offscreenonly,title:Factorio Defense")
 
 
 % load everything
@@ -21,7 +21,7 @@ loop
     begin_init
 
     % display and handle menu screen
-    if not handle_intro_screen() then
+    if not handle_intro_screen () then
 	exit
     end if
 
@@ -53,11 +53,15 @@ loop
 	tick := Time.Elapsed
 
 	% draw the map
-	update_map
+	if not paused then
+	    update_map
+	end if
 	draw_map
 	% update all turrets
 	for i : 1 .. last_turret
-	    turrets (i) -> update
+	    if not paused then
+		turrets (i) -> update
+	    end if
 	    turrets (i) -> draw
 	end for
 	% update all enemies
@@ -65,28 +69,36 @@ loop
 	    enemies (i) -> pre_update
 	end for
 	for i : 1 .. ENEMY_NUM
-	    enemies (i) -> update
+	    if not paused then
+		enemies (i) -> update
+	    end if
 	    enemies (i) -> draw
 	end for
-	%if num_enemies <= 0 then
-	spawn_enemies
-	%end if
+	if not paused then
+	    spawn_enemies
+	end if
 	% update all projectiles
 	for i : 1 .. PROJ_NUM
-	    projectiles (i) -> update
+	    if not paused then
+		projectiles (i) -> update
+	    end if
 	    projectiles (i) -> draw
 	end for
 	% do cleanups
-	resolve_enemies
-	resolve_projectiles
-	resolve_targets
-	ticks_to_repath -= 1
-	if ticks_to_repath <= 0 then
-	    ticks_to_repath += 600
-	    path_map
+	if not paused then
+	    resolve_enemies
+	    resolve_projectiles
+	    resolve_targets
+	    ticks_to_repath -= 1
+	    if ticks_to_repath <= 0 then
+		ticks_to_repath += 600
+		path_map
+	    end if
+	    % interface
+	    int_tick
+	else
+	    fix_int
 	end if
-	% interface
-	int_tick
 	draw_interface
 	handle_input
 
