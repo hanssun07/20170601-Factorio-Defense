@@ -748,8 +748,8 @@ proc spawn_enemies
 	    likelihood (i) := chance
 	end for
 
-	exit when chance = 0
-	choice := Rand.Real () * chance
+	exit when llh_sum = 0
+	choice := Rand.Real () * llh_sum
 	for i : 1 .. ENEMY_T_NUM
 	    choice -= likelihood (i)
 	    if choice < 0 then

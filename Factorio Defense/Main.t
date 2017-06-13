@@ -50,6 +50,10 @@ loop
     % give enemies a path
     path_map
     
+    % start playing music
+    in_game := true
+    play_bgm
+    
     % game
     loop
 	tick := Time.Elapsed
@@ -119,14 +123,17 @@ loop
     end loop
 
     % handle game-over
+    in_game := false
     Draw.FillBox (300, 299, 801, 500, 24)
     Draw.FillBox (299, 300, 800, 501, 30)
     Draw.FillBox (300, 300, 800, 500, 28)
     var wid : int
     if enemies_through > 0 then
+	music_game_over
 	wid := Font.Width ("Game Over. Better luck next time!", font)
 	Font.Draw ("Game Over. Better luck next time!", 550 - wid div 2, 400, font, black)
     else
+	music_win
 	wid := Font.Width ("With the rocket you built, you escape the planet.", font)
 	Font.Draw ("With the rocket you built, you escape the planet.", 550 - wid div 2, 410, font, black)
 	wid := Font.Width ("You won! Congratulations!", font)
