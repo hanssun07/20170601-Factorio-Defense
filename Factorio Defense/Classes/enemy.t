@@ -35,6 +35,7 @@ class Enemy
 	    unlock_sem (floor ((v.loc.x - 1) / MAP_M_SIZ) + 1, floor ((v.loc.y - 1) / MAP_M_SIZ) + 1, addr (v))
 	    v.state := DEAD
 	    map_deaths (floor (v.loc.x)) (floor (v.loc.y)) += 1
+	fork play_once("Sounds\\enemy_death.wav")
 	    return
 	end if
 	var found : boolean := false
@@ -87,7 +88,7 @@ class Enemy
 		request_new_target ()
 	    end if
 	end if
-	if map_handler (floor (dl.x)) (floor (dl.y)).class_type = FIRE then
+	if map_handler (max(1,floor (dl.x))) (max(1,floor (dl.y))).class_type = FIRE then
 	    var s : int := real_damage (floor (Rand.Real () + 3 * ln (map_handler (floor (dl.x)) (floor (dl.y)).health)),
 		3, armor_enemies (v.e_type))
 	    v.health -= s
@@ -209,6 +210,8 @@ class Enemy
 	end if
 
 	v.cooldown := reload_enemies (v.e_type)
+	
+	fork play_once("Sounds\\enemy_shot_" + intstr(v.e_type) + ".wav")
     end fire_projectile
 
 end Enemy
