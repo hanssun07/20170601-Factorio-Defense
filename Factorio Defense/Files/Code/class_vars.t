@@ -3,17 +3,21 @@ var enemies : array 1 .. ENEMY_NUM of pointer to Enemy
 var projectiles : array 1 .. PROJ_NUM of pointer to Projectile
 
 proc startup_init ()
+    % allocate memory for all turrets
     for i : 1 .. TURRET_NUM
 	new turrets (i)
 	turret_on_standby (i) := false
     end for
+    % allocate memory for all enemies
     for i : 1 .. ENEMY_NUM
 	new enemies (i)
 	enemy_on_standby (i) := false
     end for
+    % allocate memory for all projectiles
     for i : 1 .. PROJ_NUM
 	new projectiles (i)
     end for
+    % null-initialize all turret types
     for i : 1 .. TURRET_T_NUM
 	turret_names (i) := ""
 	max_healths_turrets (i) := 0
@@ -24,6 +28,7 @@ proc startup_init ()
 	    armor_turrets (i) (j) := 0
 	end for
     end for
+    % null-initialize all turret types
     for i : 1 .. ENEMY_T_NUM
 	enemy_names (i) := ""
 	max_healths_enemies (i) := 0
@@ -34,6 +39,7 @@ proc startup_init ()
 	    armor_enemies (i) (j) := 0
 	end for
     end for
+    % null-initialize all projectile types
     for i : 1 .. PROJ_T_NUM
 	proj_damage (i) := 0
 	proj_speed (i) := 0
@@ -41,14 +47,17 @@ proc startup_init ()
 	proj_dmg_type (i) := 0
     end for
 
+    % allocate space for the font
     font := Font.New ("serif:12")
     PROD_STR_WIDTH := max (Font.Width ("Production: ", font), Font.Width ("Electricity Stored: ", font))
     NMRL_STR_WIDTH := Font.Width ("0", font)
 
+    % init mouse options
     Mouse.ButtonChoose ("multibutton")
 end startup_init
 
 proc read_data ()
+    % self-explanatory. f is the file; tmp is atemporary variable
     var f : int
     var tmp : int
     open : f, "Files\\Data\\projectiles.txt", get
@@ -109,12 +118,14 @@ proc read_data ()
 end read_data
 
 proc begin_init ()
+    % default-initalize the map
     for i : 1 .. MAP_WIDTH
 	for j : 1 .. MAP_HEIGHT
 	    map_handler (i) (j) := make_ev (NONEXISTENT, 0, 0, 0, 0, FLOOR, make_v (i, j))
 	    cheat (addressint, map (i) (j)) := addr (map_handler (i) (j))
 	end for
     end for
+    % reset the semaphore
     for i : 1 .. MAP_M_WID
 	for j : 1 .. MAP_M_HEI
 	    map_meta_sem (i) (j) := MAP_M_CAP
@@ -123,25 +134,30 @@ proc begin_init ()
 	    end for
 	end for
     end for
+    % reset the death counter (pathfinding)
     for i : 1 .. MAP_WIDTH
 	for j : 1 .. MAP_HEIGHT
 	    map_deaths (i) (j) := 0
 	end for
     end for
+    % reset every turret
     for i : 1 .. TURRET_NUM
 	turrets (i) -> initialize (i, 0, make_v (0, 0))
 	turrets (i) -> v.state := NONEXISTENT
 	turret_on_standby (i) := false
     end for
+    % reset every enemy
     for i : 1 .. ENEMY_NUM
 	enemies (i) -> initialize (i, 0, make_v (0, 0))
 	enemies (i) -> v.state := NONEXISTENT
 	enemy_on_standby (i) := false
     end for
+    % reset every projectile
     for i : 1 .. PROJ_NUM
 	projectiles (i) -> initialize (0, FLOOR, make_v (0, 0), 0)
 	projectiles (i) -> v.state := NONEXISTENT
     end for
+    % reset all handler variables
     turrets_on_standby := 0
     enemies_on_standby := 0
     next_projectile := 1
@@ -160,6 +176,7 @@ proc begin_init ()
     num_enemies := 0
     ticks_passed := 0
 
+    %reset the interfce
     prod_avail := 0
     prod_per_tick := 1 / 60
     ticks_to_next_prod := 6
@@ -202,8 +219,11 @@ proc begin_init ()
 	prod_distribution_turrets_user (i) := 0.0
 	prod_distribution_proj (i) := 0.0
 	prod_distribution_proj_user (i) := 0.0
+	prod_until_next_turret (i) := prod_per_turret (i)
+	prod_until_next_proj (i) := prod_per_proj (i)
     end for
 
+    % the first turret is always enabled
     num_turrets_avail (1) := 1
     num_proj_avail (1) := 100
     turret_enabled (1) := true
@@ -227,7 +247,6 @@ proc resolve_projectiles ()
 
 	projectiles (next_projectile) -> initialize (
 	    proj_queue (last_proj_queue).target,
-	% proj_queue (last_proj_queue).target_type,
 	    proj_queue (last_proj_queue).p_type,
 	    proj_queue (last_proj_queue).loc,
 	    proj_queue (last_proj_queue).dmg)
@@ -269,46 +288,7 @@ proc resolve_enemies
     end if
 end resolve_enemies
 
-%Only call this when there are no enemies on the map. Turret insertion is
-%after a search - O(n) - so that this works. Since we can't keep track of
-%enemy targets, we can't necessarily clear them, and it'll look pretty stupid
-%to have enemies, all of a sudden, get confused
-/*proc resolve_turrets
- var i : int := 1
- var t : ^Turret
- new t
- loop
- exit when last_turret = num_turrets
- if turrets (last_turret) -> v.state < ALIVE then
- last_turret -= 1
- elsif turrets (i) -> v.state = ALIVE then
- i += 1
- else
- can_build_turrets:= true
- %swap the two
- t -> v := turrets (i) -> v
- t -> kills := turrets (i) -> kills
- t -> damage_dealt := turrets (i) -> damage_dealt
- turrets (i) -> v := turrets (last_turret) -> v
- turrets (i) -> kills := turrets (last_turret) -> kills
- turrets (i) -> damage_dealt := turrets (last_turret) -> damage_dealt
- turrets (last_turret) -> v := t -> v
- turrets (last_turret) -> kills := t -> kills
- turrets (last_turret) -> damage_dealt := t -> damage_dealt
-
- %fix indicies
- turrets (i) -> v.ind := i
- turrets (last_turret) -> v.ind := last_turret
-
- %we know both will pass the checks above, so increment them
- last_turret -= 1
- i += 1
- end if
- end loop
- free t
- end resolve_turrets*/
-
-%heap for flowfield generation
+%heap for flowfield generation; uses standard algoirthms for push and pop
 proc push_to_heap (p : path_vars, var size : int)
     var i : int := size + 1
     var m : path_vars
@@ -356,6 +336,8 @@ proc reset_map ()
 end reset_map
 
 %generate flowfield
+%essentially dijkstra's algorithm, but without an end point.
+%the flow field is generated based on how one arrives to any tile.
 proc path_map ()
     var map_heap_size : int := 0
     var cn : path_vars              %current node
@@ -408,6 +390,7 @@ proc path_map ()
     end for
     loop
 	exit when map_heap_size <= 0
+	exit when map_heap_size >= MAP_WIDTH*MAP_HEIGHT
 	cn := map_heap (1)
 	pop_from_heap (map_heap_size)
 	%only propagate if shortest path
@@ -433,30 +416,33 @@ proc path_map ()
 	end if
     end loop
 
+    % normalize all of the weights for the sake of easier post-handling
     for k : 0 .. 1
 	for i : 1 .. MAP_WIDTH
 	    for j : 1 .. MAP_HEIGHT
-		%for k : 0 .. 1
 		map_mov (k) (i) (j) := normalize (map_mov (k) (i) (j))
 	    end for
 	end for
     end for
-
 end path_map
 
 proc draw_map ()
+    % tc: tile color, gl : grid line color
     var tc : int := 28
     var gl : int := 27
 
+    % fill the background with the tile color
     Draw.FillBox (0, 0, MAP_WIDTH * PIXELS_PER_GRID, MAP_HEIGHT * PIXELS_PER_GRID, tc)
+    % draw the gridlines
     for i : 1 .. MAP_WIDTH - 1
 	Draw.Line (PIXELS_PER_GRID * i, 1, PIXELS_PER_GRID * i, MAP_HEIGHT * PIXELS_PER_GRID, gl)
     end for
     for i : 1 .. MAP_HEIGHT - 1
 	Draw.Line (1, PIXELS_PER_GRID * i, MAP_WIDTH * PIXELS_PER_GRID, PIXELS_PER_GRID * i, gl)
     end for
-    for i : MAP_B_W_L .. MAP_B_W_U
-	for j : MAP_B_H_L .. MAP_B_H_U
+    % draw walls and fire
+    for i : 1 .. MAP_WIDTH
+	for j : 1 .. MAP_HEIGHT
 	    if map (i) (j) -> class_type = WALL then
 		Draw.FillBox ((i - 1) * PIXELS_PER_GRID, (j - 1) * PIXELS_PER_GRID, (i) * PIXELS_PER_GRID, (j) * PIXELS_PER_GRID, darkgrey)
 		if map (i) (j) -> health < 350 then
@@ -473,27 +459,29 @@ proc draw_map ()
 	    end if
 	end for
     end for
-    for i : 1 .. 0 %MAP_WIDTH
-	for j : 1 .. MAP_HEIGHT
-	    Draw.Line (round ((i - 0.5) * PIXELS_PER_GRID),
-		round ((j - 0.5) * PIXELS_PER_GRID),
-		round ((i - 0.5 + map_mov (0) (i) (j).x * 0.5) * PIXELS_PER_GRID),
-		round ((j - 0.5 + map_mov (0) (i) (j).y * 0.5) * PIXELS_PER_GRID),
-		brightblue)
-	end for
-    end for
 end draw_map
 
+% given an enemy type, spawns the enemy wherever available
 proc spawn_enemy (t : int)
     if can_spawn then
+	% choose a random, available chunck
 	var chunk_chosen := Rand.Int (1, max (1, chunks_avail_for_spawn))
+
+	% loop through all available chunks
 	for i : 1 .. MAP_M_WID
 	    for decreasing j : MAP_M_HEI .. 1
+		% check if chunk is valid...
 		if j = MAP_M_HEI or (i = 1 or i = MAP_M_WID) then
+		    % ... and available
 		    if map_meta_sem (i) (j) > 0 then
+			% if so, decrement the chunk counter to indicate that we're getting closer to the chosen chunk
 			chunk_chosen -= 1
+
+			% check if we've arrived at the chosen chunk
 			if chunk_chosen = 0 then
+			    % if so, lock the semaphore...
 			    if lock_sem (i, j, addr (enemies (next_enemy) -> v)) then
+				% ... and spawn an enemy at an appropriate location
 				if j = MAP_M_HEI then
 				    if i = MAP_M_WID then
 					if Rand.Real > 0.5 then
@@ -553,63 +541,49 @@ proc resolve_targets
 	    %easier on eyes
 	    v := enemies (e) -> v
 
-	    var found : boolean := false
-	    for i : floor (max (MAP_B_W_L, v.loc.x - 1)) .. floor (min (MAP_B_W_U, v.loc.x + 1))
-		for j : floor (max (MAP_B_H_L, v.loc.y - 1)) .. floor (min (MAP_B_H_U, v.loc.y + 1))
-		    if map (i) (j) -> class_type = WALL then
-			if Math.Distance (i, j, v.loc.x, v.loc.y) < 0.5 then
-			    enemies (e) -> v.cur_target := map (i) (j)
-			    found := true
-			    exit
-			end if
-		    end if
-		end for
-		exit when found
-	    end for
 
-	    if not found then
+	    %initialize min-finder
+	    shortest := 4294967296.0
 
-		%initialize min-finder
-		shortest := 4294967296.0
+	    %check in the appropriate chunks
+	    for i : floor (max (1, (v.loc.x - range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
+		    floor (min (MAP_M_WID, (v.loc.x + range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1))
+		for j : floor (max (1, (v.loc.y - range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
+			floor (min (MAP_M_HEI, (v.loc.y + range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1))
+		    check := MAP_M_CAP - map_meta_sem (i) (j)
 
-		%check in the appropriate chunks
-		for i : floor (max (1, (v.loc.x - range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
-			floor (min (MAP_M_WID, (v.loc.x + range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1))
-		    for j : floor (max (1, (v.loc.y - range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1)) ..
-			    floor (min (MAP_M_HEI, (v.loc.y + range_enemies (v.e_type) - 1) / MAP_M_SIZ + 1))
-			check := MAP_M_CAP - map_meta_sem (i) (j)
-			for k : 1 .. MAP_M_CAP
-			    exit when check <= 0
-			    if map_meta (i) (j) (k) not= nil then
-				if map_meta (i) (j) (k) -> class_type >= TURRET and map_meta (i) (j) (k) -> effective_health > 0 then
-				    %triple the effective distance if a wall
-				    cur := distance_squared (map_meta (i) (j) (k) -> loc, v.loc) *
-					map_meta (i) (j) (k) -> class_type
-				    if cur < shortest then
-					u := map_meta (i) (j) (k)
-					shortest := cur
-				    end if
+		    %check every necessary entry in the chunck
+		    for k : 1 .. MAP_M_CAP
+			exit when check <= 0
+			if map_meta (i) (j) (k) not= nil then
+			    if map_meta (i) (j) (k) -> class_type >= TURRET and map_meta (i) (j) (k) -> effective_health > 0 then
+				%triple the effective distance if a wall
+				cur := distance_squared (map_meta (i) (j) (k) -> loc, v.loc) *
+				    map_meta (i) (j) (k) -> class_type
+				if cur < shortest then
+				    u := map_meta (i) (j) (k)
+				    shortest := cur
 				end if
-				check -= 1
 			    end if
-			end for
+			    check -= 1
+			end if
 		    end for
 		end for
+	    end for
 
-		if shortest >= 4294967295.0 or distance_squared (u -> loc, v.loc) > range_enemies (v.e_type) ** 2 then
-		    enemies (e) -> v.cur_target := nil
-		else
-		    enemies (e) -> v.cur_target := u
-		end if
-
+	    if shortest >= 4294967295.0 or distance_squared (u -> loc, v.loc) > range_enemies (v.e_type) ** 2 then
+		enemies (e) -> v.cur_target := nil
+	    else
+		enemies (e) -> v.cur_target := u
 	    end if
+
 
 	    enemy_on_standby (e) := false
 	    enemies_on_standby -= 1
 	end if
     end for
 
-    %turrets
+    %turrets - as with enemies.
     for t : 1 .. TURRET_NUM
 	exit when turrets_on_standby <= 0
 	if turret_on_standby (t) then
@@ -656,9 +630,13 @@ proc resolve_targets
 end resolve_targets
 
 proc update_map
+    % per tile:
+    % if it's a dead wall, remove it
+    % if it's a dead turret, remove it and fix the pointers
+    % if it's a fire, lower its health, removing it when necessary
     for i : 1 .. MAP_WIDTH
 	for j : 1 .. MAP_HEIGHT
-	    map_deaths (i) (j) := max (map_deaths (i) (j) - 1 / 3600, 0)
+	    map_deaths (i) (j) := max (map_deaths (i) (j) - 1 / 18000, 0)
 	    if map (i) (j) -> class_type = WALL then
 		if map (i) (j) -> health <= 0 then
 		    map_handler (i) (j) := make_ev (NONEXISTENT, 0, 0, 0, 0, FLOOR, make_v (i, j))
@@ -680,6 +658,7 @@ proc update_map
     end for
 end update_map
 
+% creates a turret where mx and my form the coordinate of the topleft corner of the turret
 proc spawn_turret_from_topleft (mx, my, i : int)
     num_turrets += 1
     if num_turrets >= TURRET_NUM then
@@ -687,6 +666,7 @@ proc spawn_turret_from_topleft (mx, my, i : int)
     end if
     var bp : boolean
     var n : int := 1
+    % put the turret at an available index
     for j : 1 .. TURRET_NUM
 	if turrets (j) -> v.state < ALIVE then
 	    n := j
@@ -697,6 +677,7 @@ proc spawn_turret_from_topleft (mx, my, i : int)
 	last_turret := n
     end if
 
+    % after doing all the checks, actually make the turret
     turrets (n) -> initialize (n, i, make_v (mx + 0.5, my - 0.5))
     for j : mx .. mx + 1
 	for k : my - 1 .. my
@@ -710,14 +691,20 @@ proc spawn_turret_from_topleft (mx, my, i : int)
     end for
 end spawn_turret_from_topleft
 
+% using a lognormal probability distribution, weigh the choices of enemy
+% against what we want to fill the power gap, spawning the ones chosen.
 proc spawn_enemies
+    % player power is an aggregate of the turrets on the map, the production
+    % produced, and the time passed.
     var player_power : real := 0
     for i : 1 .. TURRET_NUM
 	if turrets (i) -> v.state = ALIVE then
-	    player_power += turrets (i) -> v.e_type
-	    end if
+	    player_power += turrets (i) -> v.e_type ** 1.2
+	end if
     end for
-    player_power := player_power*10+  sqrt (prod_per_tick * 60)
+    player_power := (player_power ) * 10 + sqrt (prod_per_tick * 60) + ticks_passed * 0.02
+
+    % enemy power is an aggregate of the health of enemies on the map
     var enemy_power : real := 0
     for i : 1 .. ENEMY_NUM
 	if enemies (i) -> v.state = ALIVE then
@@ -734,22 +721,31 @@ proc spawn_enemies
     var expected_error : real
     var chance : real
     loop
-	exit when enemy_power > player_power**1.2
+	exit when enemy_power > player_power ** 1.5
 	exit when num_enemies >= ENEMY_NUM
 	llh_sum := 0
 	enemies_needed := ENEMY_NUM - num_enemies
 	power_to_fill := (player_power - 0)
 	for i : 1 .. ENEMY_T_NUM
+	    % given the health of an enemy and its type, find its power
 	    power := ((range_enemies (i) div 6 + 1) * max_healths_enemies (i))
+
+	    % figure out how many of that enemy we'd need to fill the power quota
 	    expected_num := power_to_fill / power
+
+	    % see how far off it is
 	    expected_error := 1 / expected_num
+
+	    % set its chance as its value on the lognormal distribution
 	    chance := exp (- ((ln (expected_error) ** 2)))
+
 	    llh_sum += chance
 	    likelihood (i) := chance
 	end for
 
-	exit when chance = 0
-	choice := Rand.Real () * chance
+	% like with choosing the chunk in spawn_enemy, choose the type of enemy to spawn
+	exit when llh_sum = 0
+	choice := Rand.Real () * llh_sum
 	for i : 1 .. ENEMY_T_NUM
 	    choice -= likelihood (i)
 	    if choice < 0 then
