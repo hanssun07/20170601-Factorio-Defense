@@ -131,13 +131,15 @@ loop
     if enemies_through > 0 then
 	music_game_over
 	wid := Font.Width ("Game Over. Better luck next time!", font)
-	Font.Draw ("Game Over. Better luck next time!", 550 - wid div 2, 400, font, black)
+	Font.Draw ("Game Over. Better luck next time!", 550 - wid div 2, 420, font, black)
     else
 	music_win
 	wid := Font.Width ("With the rocket you built, you escape the planet.", font)
-	Font.Draw ("With the rocket you built, you escape the planet.", 550 - wid div 2, 410, font, black)
+	Font.Draw ("With the rocket you built, you escape the planet.", 550 - wid div 2, 440, font, black)
 	wid := Font.Width ("You won! Congratulations!", font)
-	Font.Draw ("You won! Congratulations!", 550 - wid div 2, 390, font, black)
+	Font.Draw ("You won! Congratulations!", 550 - wid div 2, 420, font, black)
+	wid := Font.Width ("Final Score: " + frealstr(6000000/prod_per_tick +7200.0 - ticks_passed / 60,1,1), font)
+	Font.Draw ("Final Score: " + frealstr(6000000/prod_per_tick +7200.0 - ticks_passed / 60,1,1), 550 - wid div 2, 380, font, black)
     end if
     wid := Font.Width ("Press any key to continue...", font)
     Font.Draw ("Press any key to continue...", 550 - wid div 2, 340, font, black)
