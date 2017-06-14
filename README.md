@@ -16,5 +16,6 @@ The map, which shows the current location of turrets and aliens at the entrance 
 2. Open `Main.t` with Open Turing, and press `F1` or the `Run` button.
 
 ### Troubleshooting
-_The sound effects are terrible!_
+_The sound effects are terrible!_ 
+
 Sorry, that's a problem with Turing, which only gives me three channels to work with. If you want to get rid of the constant lag, rename (or outright delete) the `Sounds/Effects` folder.
