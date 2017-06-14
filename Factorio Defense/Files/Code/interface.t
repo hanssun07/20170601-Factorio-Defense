@@ -1,5 +1,5 @@
 module Interface
-    import Mouse, spawn_turret_from_topleft
+    import Mouse, spawn_turret_from_topleft, File, play_effect
     export var pervasive unqualified all
 
 
@@ -637,6 +637,7 @@ module Interface
 		    for i : 1 .. prod_dist_ys_count
 			if (x > ACTUAL_BEGIN + 50 and x < ACTUAL_BEGIN + 100 and y > ^ (prod_dist_ys (i)) - 50 and y < ^ (prod_dist_ys (i))) then
 			    mouse_item_selected := i
+			    fork play_effect ("Sounds\\select.wav")
 			    exit
 			end if
 		    end for
@@ -701,6 +702,8 @@ module Interface
 				^ (map (mx) (my)) := make_ev (ALIVE, 350, 0, 0, 0, WALL, make_v (mx, my))
 				ticks_to_repath -= 20
 				num_wall_avail -= 1
+
+				fork play_effect ("Sounds\\place_wall.wav")
 			    else
 				% draw an error
 				Draw.FillBox ((mx - 1) * PIXELS_PER_GRID + 3, (my - 1) * PIXELS_PER_GRID + 3, (mx) * PIXELS_PER_GRID - 3, (my) * PIXELS_PER_GRID - 3, red)
@@ -747,7 +750,7 @@ module Interface
 			end for
 		    end if
 		end if
-	    % do with turrets what we did with walls earlier
+		% do with turrets what we did with walls earlier
 	    else
 		for i : 1 .. TURRET_T_NUM
 		    if mouse_item_selected = selection_num_turrets (i) and num_turrets_avail (i) > 0 then
@@ -767,6 +770,7 @@ module Interface
 				if bn mod 10 = 1 and can_build_turrets then
 				    num_turrets_avail (i) -= 1
 				    spawn_turret_from_topleft (mx, my, i)
+				    fork play_effect ("Sounds\\place_turret.wav")
 				else
 				    Draw.FillOval (mx * PIXELS_PER_GRID, (my - 1) * PIXELS_PER_GRID, PIXELS_PER_GRID - 2, PIXELS_PER_GRID - 2, green)
 				end if
@@ -780,7 +784,7 @@ module Interface
 		    end if
 		end for
 	    end if
-	    
+
 	    % remove buildings on the map (so long as it's not fire)
 	    if bn div 100 = 1 then
 		if map (mx) (my) -> class_type not= FIRE then
@@ -819,7 +823,7 @@ module Interface
     fcn handle_intro_screen () : boolean
 	% background
 	Draw.FillBox (0, 0, 1100, 800, 28)
-	
+
 	% draw the title in a nice embossing
 	var wid : int
 	wid := Font.Width ("Factorio Defense", font)
@@ -846,7 +850,7 @@ module Interface
 	Font.Draw ("Press [Space] to play.", 550 - wid div 2, 200, font, black)
 	wid := Font.Width ("Alternatively, Press Q to quit.", font)
 	Font.Draw ("Alternatively, Press Q to quit.", 550 - wid div 2, 180, font, black)
-	
+
 	% wait for input
 	View.Update ()
 	var c : string (1)
@@ -859,4 +863,64 @@ module Interface
 	    end if
 	end loop
     end handle_intro_screen
+
+    process bgm
+	if File.Exists ("Sounds\\bgm.mp3") then
+	    loop
+		exit when in_game = false
+		Music.PlayFile ("Sounds\\bgm.mp3")
+	    end loop
+	end if
+    end bgm
+
+    proc play_bgm ()
+	fork bgm
+    end play_bgm
+
+    proc game_over_loss ()
+	Music.PlayFileStop
+	fork play_effect ("Sounds\\loss.wav")
+
+	Draw.FillBox (300, 299, 801, 500, 24)
+	Draw.FillBox (299, 300, 800, 501, 30)
+	Draw.FillBox (300, 300, 800, 500, 28)
+	var wid : int
+	wid := Font.Width ("Game Over. Better luck next time!", font)
+	Font.Draw ("Game Over. Better luck next time!", 550 - wid div 2, 420, font, black)
+	wid := Font.Width ("Press any key to continue...", font)
+	Font.Draw ("Press any key to continue...", 550 - wid div 2, 340, font, black)
+	View.Update
+	var c : string (1)
+	getch (c)
+    end game_over_loss
+
+    proc game_over_win ()
+	Music.PlayFileStop
+	fork play_effect ("Sounds\\victory.wav")
+
+	var wid : int
+	var c : string (1)
+
+	Draw.FillBox (300, 299, 801, 500, 24)
+	Draw.FillBox (299, 300, 800, 501, 30)
+	Draw.FillBox (300, 300, 800, 500, 28)
+	wid := Font.Width ("With the rocket you built, you escape the planet.", font)
+	Font.Draw ("With the rocket you built, you escape the planet.", 550 - wid div 2, 440, font, black)
+	wid := Font.Width ("You won! Congratulations!", font)
+	Font.Draw ("You won! Congratulations!", 550 - wid div 2, 420, font, black)
+	wid := Font.Width ("Final Score: " + frealstr (6000000 / prod_per_tick + 7200.0 - ticks_passed / 60, 1, 1), font)
+	Font.Draw ("Final Score: " + frealstr (6000000 / prod_per_tick + 7200.0 - ticks_passed / 60, 1, 1), 550 - wid div 2, 380, font, black)
+	wid := Font.Width ("Press any key to continue...", font)
+	Font.Draw ("Press any key to continue...", 550 - wid div 2, 340, font, black)
+
+	loop
+	    View.Update
+	    exit when hasch
+
+	    % draw rocket
+	    
+	    delay (16)
+	end loop
+	getch (c)
+    end game_over_win
 end Interface

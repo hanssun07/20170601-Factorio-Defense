@@ -91,7 +91,7 @@ module Global_Vars
     var last_enemy : int := 1
     var num_enemies : int := 0
     var can_spawn : boolean := true
-    var chunks_avail_for_spawn : int :=MAP_M_SIZ * MAP_M_SIZ * 2
+    var chunks_avail_for_spawn : int := MAP_M_SIZ * MAP_M_SIZ * 2
     
     %turrets are not short-lived, so they'll be handled as vectors.
     var last_turret : int := 0
@@ -101,6 +101,8 @@ module Global_Vars
     var enemies_through : int := 0
     var ticks_passed : int := 0
     var ticks_to_repath : int := 600
+    
+    var in_game : boolean := false
 end Global_Vars
 
 module Sidebar

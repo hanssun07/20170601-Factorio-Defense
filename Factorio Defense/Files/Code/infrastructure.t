@@ -169,7 +169,7 @@ module Class_Vars
     var map_deaths : array 1 .. MAP_WIDTH of array 1 .. MAP_HEIGHT of real
 
     fcn lock_sem (x, y : int, e : cheat
-	unchecked ^entity_vars) : boolean        
+	unchecked ^entity_vars) : boolean
 	if map_meta_sem (x) (y) > 0 then
 	    map_meta_sem (x) (y) -= 1
 	    for i : 1 .. MAP_M_CAP
@@ -204,12 +204,12 @@ module Class_Vars
 	    end if
 	end if
     end unlock_sem
-    
-    fcn real_damage(damage, dt : int, armor : array 1..DAMAGE_TYPES of int) : int
-	result max(floor(damage*0.01*(100-armor(dt)) + Rand.Real()),1)
+
+    fcn real_damage (damage, dt : int, armor : array 1 .. DAMAGE_TYPES of int) : int
+	result max (floor (damage * 0.01 * (100 - armor (dt)) + Rand.Real ()), 1)
     end real_damage
-    
-    
+
+
     proc check_research_prereqs ()
 	var prereqs : boolean := false
 	for i : 1 .. RESEARCH_NUM
@@ -231,3 +231,14 @@ module Class_Vars
 	end for
     end check_research_prereqs
 end Class_Vars
+
+
+module Sound
+    import File
+    export var pervasive unqualified all
+    process play_effect (s : string)
+	if File.Exists (s) then
+	    Music.PlayFile (s)
+	end if
+    end play_effect
+end Sound

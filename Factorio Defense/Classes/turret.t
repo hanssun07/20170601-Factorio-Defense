@@ -38,6 +38,7 @@ class Turret
 	    num_turrets -= 1
 	    can_build_turrets := true
 	    v.state := DEAD
+	    fork play_effect ("Sounds\\turret_destroyed.wav")
 	    return
 	end if
 	if v.cur_target not= nil then
@@ -130,6 +131,8 @@ class Turret
 	end if
 
 	v.cooldown := reload_turrets (v.e_type)
+
+	fork play_effect ("Sounds\\Effects\\turret_shot_" + intstr (v.e_type) + ".wav")
     end fire_projectile
 
 end Turret

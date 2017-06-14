@@ -1,4 +1,5 @@
 class Enemy
+    import Math
     export var all
 
     var v : entity_vars
@@ -34,8 +35,26 @@ class Enemy
 	    unlock_sem (floor ((v.loc.x - 1) / MAP_M_SIZ) + 1, floor ((v.loc.y - 1) / MAP_M_SIZ) + 1, addr (v))
 	    v.state := DEAD
 	    map_deaths (floor (v.loc.x)) (floor (v.loc.y)) += 1
+	fork play_effect ("Sounds\\enemy_death.wav")
 	    return
 	end if
+	var found : boolean := false
+	for i : floor (max (MAP_B_W_L, dl.x - 1)) .. floor (min (MAP_B_W_U, dl.x + 1))
+	    for j : floor (max (MAP_B_H_L, dl.y - 1)) .. floor (min (MAP_B_H_U, dl.y + 1))
+		if map (i) (j) -> class_type = WALL then
+		    if Math.Distance (i, j, dl.x, dl.y) < 1-ENEMY_MVT_TILES_PER_SEC then
+			v.cur_target := map (i) (j)
+			found := true
+			if enemy_on_standby(v.ind) then
+			    enemy_on_standby(v.ind) := false
+			    enemies_on_standby -= 1
+			end if
+			exit
+		    end if
+		end if
+	    end for
+	    exit when found
+	end for
 	if v.cur_target not= nil then %and Rand.Real > 0.01 then
 	    if v.cur_target -> state = DEAD then
 		request_new_target ()
@@ -69,12 +88,12 @@ class Enemy
 		request_new_target ()
 	    end if
 	end if
-	if map_handler (floor (dl.x)) (floor (dl.y)).class_type = FIRE then
+	if map_handler (max(1,floor (dl.x))) (max(1,floor (dl.y))).class_type = FIRE then
 	    var s : int := real_damage (floor (Rand.Real () + 3 * ln (map_handler (floor (dl.x)) (floor (dl.y)).health)),
 		3, armor_enemies (v.e_type))
 	    v.health -= s
 	    v.effective_health -= s
-	end if        
+	end if
 	v.cooldown -= 1
     end update
 
@@ -191,6 +210,8 @@ class Enemy
 	end if
 
 	v.cooldown := reload_enemies (v.e_type)
+	
+	fork play_effect ("Sounds\\Effects\\enemy_shot_" + intstr(v.e_type) + ".wav")
     end fire_projectile
 
 end Enemy
