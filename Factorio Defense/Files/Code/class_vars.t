@@ -721,7 +721,7 @@ proc spawn_enemies
     var expected_error : real
     var chance : real
     loop
-	exit when enemy_power > player_power ** 1.5
+	exit when enemy_power > player_power ** 1.3
 	exit when num_enemies >= ENEMY_NUM
 	llh_sum := 0
 	enemies_needed := ENEMY_NUM - num_enemies

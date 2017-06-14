@@ -35,7 +35,7 @@ class Enemy
 	    unlock_sem (floor ((v.loc.x - 1) / MAP_M_SIZ) + 1, floor ((v.loc.y - 1) / MAP_M_SIZ) + 1, addr (v))
 	    v.state := DEAD
 	    map_deaths (floor (v.loc.x)) (floor (v.loc.y)) += 1
-	fork play_once("Sounds\\enemy_death.wav")
+	fork play_effect ("Sounds\\enemy_death.wav")
 	    return
 	end if
 	var found : boolean := false
@@ -211,7 +211,7 @@ class Enemy
 
 	v.cooldown := reload_enemies (v.e_type)
 	
-	fork play_once("Sounds\\enemy_shot_" + intstr(v.e_type) + ".wav")
+	fork play_effect ("Sounds\\Effects\\enemy_shot_" + intstr(v.e_type) + ".wav")
     end fire_projectile
 
 end Enemy

@@ -236,9 +236,9 @@ end Class_Vars
 module Sound
     import File
     export var pervasive unqualified all
-    process play_once (s : string)
+    process play_effect (s : string)
 	if File.Exists (s) then
 	    Music.PlayFile (s)
 	end if
-    end play_once
+    end play_effect
 end Sound
