@@ -5,7 +5,7 @@ Unlicensed.
 
 Development began May 12, and ended June 14, 2017.
 
-An overview of how the game was constructed can be found in [construction.md](construction.md).
+An overview of how the game was constructed can be found in [CONSTRUCTION.md](CONSTRUCTION.md).
 
 ### Objective
 In this game, one balances furthering production so as to escape the hostile planet on a spaceship with keeping the hostile inhabitants at bay by manufacturing, placing, supplying, and repairing turrets.
