@@ -914,18 +914,19 @@ module Interface
 	Font.Draw ("Press any key to continue...", 550 - wid div 2, 340, font, black)
 	
 	var r_img : int := Pic.FileNew("Images\\Rocket.bmp")
-	Pic.SetTransparentColor(r_img, brightred)
+	Pic.SetTransparentColor(r_img, white)
 	var x : int := INTFC_BEGIN + (maxx-INTFC_BEGIN-Pic.Width(r_img)) div 2
 	var y : real := -Pic.Height(r_img)
+	var z : int := 0
+	var v : int := INTFC_BEGIN + (maxx-INTFC_BEGIN)div 2
 	loop
 	    View.Update
 	    exit when hasch
 	    exit when r_img < 1
-
+	    
 	    % draw rocket
 	    Pic.Draw(r_img, x, floor(y), picMerge)
 	    y += 1.8
-	    for i : y-
 	    
 	    delay (16)
 	end loop
