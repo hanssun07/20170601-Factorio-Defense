@@ -24,6 +24,7 @@ loop
     if not handle_intro_screen () then
 	exit
     end if
+    
 
     % prep phase: no enemies and no need to update;
     % continue when first turret is placed

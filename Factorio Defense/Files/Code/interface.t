@@ -912,12 +912,21 @@ module Interface
 	Font.Draw ("Final Score: " + frealstr (6000000 / prod_per_tick + 7200.0 - ticks_passed / 60, 1, 1), 550 - wid div 2, 380, font, black)
 	wid := Font.Width ("Press any key to continue...", font)
 	Font.Draw ("Press any key to continue...", 550 - wid div 2, 340, font, black)
-
+	
+	var r_img : int := Pic.FileNew("Images\\Rocket.bmp")
+	Pic.SetTransparentColor(r_img, white)
+	var x : int := INTFC_BEGIN + (maxx-INTFC_BEGIN-Pic.Width(r_img)) div 2
+	var y : real := -Pic.Height(r_img)
+	var z : int := 0
+	var v : int := INTFC_BEGIN + (maxx-INTFC_BEGIN)div 2
 	loop
 	    View.Update
 	    exit when hasch
-
+	    exit when r_img < 1
+	    
 	    % draw rocket
+	    Pic.Draw(r_img, x, floor(y), picMerge)
+	    y += 1.8
 	    
 	    delay (16)
 	end loop
